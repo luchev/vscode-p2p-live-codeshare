@@ -18,7 +18,7 @@
     "commands": [
       {
         "command": "p2p-share.setupSubscriber",
-        "title": "zp2p: Setup Listener"
+        "title": "zp2p: Setup Subscriber"
       },
       {
         "command": "p2p-share.setupPublisher",
