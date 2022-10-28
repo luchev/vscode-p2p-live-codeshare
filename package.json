@@ -1,0 +1,63 @@
+{
+  "name": "p2p-share",
+  "displayName": "p2p-share",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.72.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:p2p-share.setupSubscriber",
+    "onCommand:p2p-share.setupPublisher"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "p2p-share.setupSubscriber",
+        "title": "zp2p: Setup Listener"
+      },
+      {
+        "command": "p2p-share.setupPublisher",
+        "title": "zp2p: Setup Publisher"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.72.0",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "@vscode/test-electron": "^2.1.5",
+    "eslint": "^8.24.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.0.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^5.0.0",
+    "@chainsafe/libp2p-noise": "^10.0.0",
+    "@libp2p/mplex": "^7.0.0",
+    "@libp2p/tcp": "^5.0.1",
+    "libp2p": "^0.40.0"
+  }
+}
