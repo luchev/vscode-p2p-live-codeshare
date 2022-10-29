@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import {toString as uint8ArrayToString} from "uint8arrays/to-string";
 import {createNode} from './shared/createNode';
-import {Topics} from './constants';
+import {Topics} from './shared/constants';
 import {multiaddr } from '@multiformats/multiaddr'
 import {logger} from './shared/logger';
 
-export async function setupSubscriber(ctx: vscode.ExtensionContext) {
+async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	const topic = Topics.ChangeFile;
 	const node1 = await Promise.resolve(createNode())
 	node1.pubsub.addEventListener("message", (evt) => {
@@ -23,4 +23,11 @@ export async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	} else {
 		await node1.dial(multiaddr(inputAddress.trim()))
 	}
+}
+
+export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {
+	ctx.subscriptions.push(vscode.commands.registerCommand(
+		'p2p-share.setupSubscriber',
+		async () => setupSubscriber(ctx))
+	);
 }

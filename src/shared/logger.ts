@@ -1,6 +1,6 @@
 import {getExtensionLogger} from "@vscode-logging/logger";
 import { IVSCodeExtLogger } from "@vscode-logging/types";
-import {ExtensionName} from "../constants";
+import {ExtensionName} from "./constants";
 import * as vscode from 'vscode';
 
 let _logger: IVSCodeExtLogger;
