@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {setupPublisher} from './setupPublisher';
 import {setupSubscriber} from './setupSubscriber';
+import {initLogger} from './shared/logger';
 
 
 export function activate(ctx: vscode.ExtensionContext) {
@@ -13,6 +14,8 @@ export function activate(ctx: vscode.ExtensionContext) {
 		'p2p-share.setupSubscriber',
 		async () => setupSubscriber(ctx))
 	);
+
+	initLogger(ctx);
 }
 
 export function deactivate() { }

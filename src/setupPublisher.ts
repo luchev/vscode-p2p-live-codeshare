@@ -4,7 +4,7 @@ import {createNode} from './shared/createNode';
 import {Topics} from './constants';
 
 export async function setupPublisher(ctx: vscode.ExtensionContext) {
-	const topic = Topics[0];
+	const topic = Topics.ChangeFile;
 	const node2 = await Promise.resolve(createNode())
 	vscode.window.showInformationMessage('started publisher: ' + node2.getMultiaddrs()[1]); // 1 is the non-localhost one
 
