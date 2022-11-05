@@ -3,6 +3,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { createNode } from "./shared/createNode";
 import { SkipTopics, Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
+import {generateName} from "./shared/nameGenerator";
 
 let _discoveredPeers = new Set();
 
@@ -38,10 +39,12 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
       return;
     }
     _discoveredPeers.add(peerId);
-    logger().info("Subscriber discovered peer", { PeerId: peerId });
+    logger().info("Subscriber discovered peer", { PeerId: generateName(peerId) });
   });
 
-  logger().info("Subscriber set up successfully");
+  logger().info("Subscriber set up successfully", {
+	id: generateName(subscriber.peerId.toString()),
+  });
 }
 
 export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {

@@ -3,6 +3,7 @@ import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { createNode, relayAddresses as setupRelay } from "./shared/createNode";
 import { Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
+import {generateName as readableName} from "./shared/nameGenerator";
 
 let sequenceId = 0;
 let _discoveredPeers = new Set();
@@ -17,7 +18,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
       return;
     }
     _discoveredPeers.add(peerId);
-    logger().info("Subscriber discovered peer", { PeerId: peerId });
+    logger().info("Publisher discovered peer", { PeerId: readableName(peerId) });
   });
 
   setInterval(() => {
@@ -29,7 +30,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
         logger().info("Publisher sent a message", {
           topic: Topics.ChangeFile,
           data: msg,
-          subscribers: x.recipients,
+          subscribers: x.recipients.map(x => readableName(x.toString())),
         })
       )
       .catch((err) =>
@@ -37,7 +38,9 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
       );
   }, 5000);
 
-  logger().info("Publisher set up");
+  logger().info("Publisher set up",{
+    id: readableName(publisher.peerId.toString()),
+  });
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {

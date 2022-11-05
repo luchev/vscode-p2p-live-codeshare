@@ -62,6 +62,7 @@
     "@libp2p/tcp": "^5.0.1",
     "@vscode-logging/logger": "^1.2.3",
     "libp2p": "^0.40.0",
-    "uint8arrays": "^4.0.2"
+    "uint8arrays": "^4.0.2",
+    "unique-names-generator": "^4.7.1"
   }
 }
