@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { createNode, relayAddresses as setupRelay } from "./shared/createNode";
+import { createNode, startRelay as setupRelay } from "./shared/createNode";
 import { Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
 import {generateName as readableName} from "./shared/nameGenerator";
@@ -9,8 +9,12 @@ let sequenceId = 0;
 let _discoveredPeers = new Set();
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
-  let bootstrap = await setupRelay();
-  const publisher = await Promise.resolve(createNode(bootstrap));
+//   let bootstrap = await setupRelay(); // This starts a 3rd node 
+  const publisher = await Promise.resolve(createNode([]));
+  logger().info("Publisher started",{
+    id: readableName(publisher.peerId.toString()),
+	addresses: publisher.getMultiaddrs().map(x => x.toString()),
+  });
 
   publisher.addEventListener("peer:discovery", (evt) => {
     const peerId = evt.detail.id.toString();
@@ -37,10 +41,6 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
         logger().warn("Publisher failed to send message", { error: err })
       );
   }, 5000);
-
-  logger().info("Publisher set up",{
-    id: readableName(publisher.peerId.toString()),
-  });
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {

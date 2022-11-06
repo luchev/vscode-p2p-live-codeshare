@@ -19,6 +19,11 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
   }
 
   const subscriber = await Promise.resolve(createNode([inputAddress.trim()]));
+  logger().info("Subscriber set up successfully", {
+	id: generateName(subscriber.peerId.toString()),
+	addresses: subscriber.getMultiaddrs().map(x => x.toString()),
+  });
+
   subscriber.pubsub.subscribe(Topics.ChangeFile);
 
   subscriber.pubsub.addEventListener("message", (evt) => {
@@ -40,10 +45,6 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
     }
     _discoveredPeers.add(peerId);
     logger().info("Subscriber discovered peer", { PeerId: generateName(peerId) });
-  });
-
-  logger().info("Subscriber set up successfully", {
-	id: generateName(subscriber.peerId.toString()),
   });
 }
 

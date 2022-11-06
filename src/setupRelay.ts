@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import {relayAddresses} from "./shared/createNode";
+import {startRelay} from "./shared/createNode";
 
 async function setupRelay(ctx: vscode.ExtensionContext) {
-  await relayAddresses();
+  await startRelay();
 }
 
 export function registerSetupRelay(ctx: vscode.ExtensionContext) {
