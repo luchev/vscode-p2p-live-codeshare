@@ -11,7 +11,8 @@
   ],
   "activationEvents": [
     "onCommand:p2p-share.setupSubscriber",
-    "onCommand:p2p-share.setupPublisher"
+    "onCommand:p2p-share.setupPublisher",
+    "onCommand:p2p-share.sendProjectFiles"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -23,6 +24,10 @@
       {
         "command": "p2p-share.setupPublisher",
         "title": "zp2p: Setup Publisher"
+      },
+      {
+        "command": "p2p-share.sendProjectFiles",
+        "title": "zp2p: Send project files to Docker-able machine"
       }
     ]
   },
@@ -38,6 +43,7 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.0",
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.0",
     "@types/node": "16.x",
@@ -59,6 +65,7 @@
     "@libp2p/mplex": "^7.0.0",
     "@libp2p/tcp": "^5.0.1",
     "@vscode-logging/logger": "^1.2.3",
+    "adm-zip": "^0.5.9",
     "libp2p": "^0.40.0"
   }
 }

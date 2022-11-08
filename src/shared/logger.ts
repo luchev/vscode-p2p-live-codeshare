@@ -16,11 +16,25 @@ export function logger() {
 export function initLogger(ctx: vscode.ExtensionContext) {
 	_logger = getExtensionLogger({
 		extName: ExtensionName,
-		level: 'info',
-		logPath: ctx.logUri.path,
+		level: 'debug',
+		logPath: ctx.logUri.fsPath,
 		logOutputChannel: vscode.window.createOutputChannel(ExtensionName),
 		sourceLocationTracking: false,
-		logConsole: false,
+		logConsole: true,
 	});
     isInitialized = true;
+}
+
+export function log() {
+	return function (target: any, propertyKey: any, descriptor: PropertyDescriptor) {
+		var originalMethod = descriptor.value;
+	
+		descriptor.value = function(...args: any[]) {
+			let functionName = propertyKey;
+			logger().debug(functionName + "(" + args.join(", ") + ")");
+			return originalMethod.apply(this, args);
+		};
+	
+		return descriptor;
+	};
 }
