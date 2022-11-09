@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
+import {copyEdit} from './applyEdit';
 import {registerSetupPublisher} from './setupPublisher';
-import {registerSetupRelay} from './setupRelay';
 import {registerSetupSubscriber} from './setupSubscriber';
 import {initLogger} from './shared/logger';
 

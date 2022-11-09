@@ -3,7 +3,8 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { createNode } from "./shared/createNode";
 import { SkipTopics, Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
-import {generateName} from "./shared/nameGenerator";
+import { generateName } from "./shared/nameGenerator";
+import { copyEdit } from "./applyEdit";
 
 let _discoveredPeers = new Set();
 
@@ -20,8 +21,8 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
 
   const subscriber = await Promise.resolve(createNode([inputAddress.trim()]));
   logger().info("Subscriber set up successfully", {
-	id: generateName(subscriber.peerId.toString()),
-	addresses: subscriber.getMultiaddrs().map(x => x.toString()),
+    id: generateName(subscriber.peerId.toString()),
+    addresses: subscriber.getMultiaddrs().map((x) => x.toString()),
   });
 
   subscriber.pubsub.subscribe(Topics.ChangeFile);
@@ -32,8 +33,13 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
       return;
     }
 
+    let data = JSON.parse(
+      uint8ArrayToString(evt.detail.data)
+    ) as vscode.TextDocumentChangeEvent;
+    copyEdit(data);
+
     logger().info("Subscriber received message", {
-      data: uint8ArrayToString(evt.detail.data),
+      data: data,
       topic: evt.detail.topic,
     });
   });
@@ -44,7 +50,9 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
       return;
     }
     _discoveredPeers.add(peerId);
-    logger().info("Subscriber discovered peer", { PeerId: generateName(peerId) });
+    logger().info("Subscriber discovered peer", {
+      PeerId: generateName(peerId),
+    });
   });
 }
 
