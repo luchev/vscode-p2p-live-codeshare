@@ -19,12 +19,23 @@ export async function copyEdit(e: vscode.TextDocumentChangeEvent) {
         if (uris.length === 1) {
           const wsedit = new vscode.WorkspaceEdit();
           for (let contentChange of e.contentChanges) {
-            try {
-              wsedit.insert(uris[0], contentChange.range.start, contentChange.text);
-              vscode.workspace.applyEdit(wsedit);
-            } catch (err) {
-              logger().error("-------", err);
-            }
+            vscode.workspace.openTextDocument(uris[0]).then((a: vscode.TextDocument) => {
+              vscode.window.showTextDocument(a, 1, false).then(e => {
+                  e.edit(edit => {
+                      edit.replace(contentChange.range.start, contentChange.text);
+                  });
+              });
+          }, (error: any) => {
+              console.error(error);
+              debugger;
+          });
+
+            // try {
+            //   wsedit.insert(uris[0], contentChange.range.start, contentChange.text);
+            //   vscode.workspace.applyEdit(wsedit);
+            // } catch (err) {
+            //   logger().error("-------", err);
+            // }
           }
           logger().info(`Applied file edit to ${uris[0]}`);
         } else {
