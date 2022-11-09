@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { createNode, startRelay as setupRelay } from "./shared/createNode";
+import { createNode } from "./shared/createNode";
 import { Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
 import {generateName as readableName} from "./shared/nameGenerator";
