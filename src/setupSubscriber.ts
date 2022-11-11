@@ -29,12 +29,6 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
 		vscode.window.showErrorMessage('An Address is mandatory');
 	} else {
 		await node1.dial(multiaddr(inputAddress.trim()));
-
-		let r = await node1.dht.get(uint8ArrayFromString("dockerable"));
-		console.log(r);
-		for (let d in r) {
-			console.log(d);
-		}
 	}
 }
 

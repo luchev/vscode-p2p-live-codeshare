@@ -11,8 +11,6 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
 	const node2 = await Promise.resolve(createNode(peerid));
 	vscode.window.showInformationMessage('started publisher: ' + node2.getMultiaddrs().join("\n")); // 1 is the non-localhost one
 
-	node2.dht.put(uint8ArrayFromString("dockerable"), uint8ArrayFromString("true"));
-
 	setInterval(() => {
 		node2.pubsub.publish(topic, uint8ArrayFromString('Bird bird bird, bird is the word!')).catch(err => {
 			vscode.window.showInformationMessage(err);
