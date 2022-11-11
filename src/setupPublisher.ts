@@ -22,7 +22,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
 
 	node2.connectionManager.addEventListener("peer:connect", async (evt) => {
 		const connection = evt.detail as Connection;
-		console.log(connection.streams)
+		console.log('Connected to %s', connection.remotePeer.toString()); // Log connected peer
 		const stream = await connection.newStream("/zip");
 		pipe(
 			[uint8ArrayFromString("hello")],
