@@ -4,8 +4,7 @@ import {registerSetupPublisher} from './setupPublisher';
 import {registerSetupSubscriber} from './setupSubscriber';
 import {initLogger} from './shared/logger';
 
-
-export function activate(ctx: vscode.ExtensionContext) {
+export async function activate(ctx: vscode.ExtensionContext) {
 	initLogger(ctx);
 	registerSetupPublisher(ctx);
 	registerSetupSubscriber(ctx);
