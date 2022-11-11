@@ -8,9 +8,9 @@ import { logger } from './shared/logger';
 
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
-	if(vscode.workspace.workspaceFolders !== undefined) {
+	if (vscode.workspace.workspaceFolders !== undefined) {
 		let ws = vscode.workspace.workspaceFolders[0];
-		
+
 		if (vscode.window.activeTextEditor !== undefined) {
 			let docuri = vscode.window.activeTextEditor.document.uri;
 			let tmpWs = vscode.workspace.getWorkspaceFolder(docuri);
@@ -30,7 +30,7 @@ async function publishFiles(context: vscode.ExtensionContext) {
 
 
 		let message = new DockerFilesMessage(userId, zipName, zipBuffer);
-		
+
 		let jsonMsg = JSON.stringify(message);
 
 		let uint8Array = new TextEncoder().encode(jsonMsg);

@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
-import {toString as uint8ArrayToString} from "uint8arrays/to-string";
-import {fromString as uint8ArrayFromString} from "uint8arrays/from-string";
-import {createNode} from './shared/createNode';
-import {Topics} from './shared/constants';
-import {multiaddr } from '@multiformats/multiaddr';
-import {logger} from './shared/logger';
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
+import { createNode } from './shared/createNode';
+import { Topics } from './shared/constants';
+import { multiaddr } from '@multiformats/multiaddr';
+import { logger } from './shared/logger';
 import { Message } from '@libp2p/interface-pubsub';
 import { peer2 } from './shared/peers';
 import { createFromProtobuf } from '@libp2p/peer-id-factory';
-import {Connection} from '@libp2p/interface-connection';
-import {pipe}from 'it-pipe';
+import { Connection } from '@libp2p/interface-connection';
+import { pipe } from 'it-pipe';
 
 async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	const peerid = await createFromProtobuf(uint8ArrayFromString(peer2, "base64"));
@@ -23,7 +23,7 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	});
 	node1.pubsub.subscribe(topic);
 
-	node1.handle('/zip', ({stream, connection}) => {
+	node1.handle('/zip', ({ stream, connection }) => {
 		console.log(`Message from ${connection.remotePeer}`);
 		pipe(
 			stream,
