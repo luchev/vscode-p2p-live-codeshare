@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { createNode } from "./shared/createNode";
-import { SkipTopics, Topics } from "./shared/constants";
+import { Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
-import { generateName } from "./shared/nameGenerator";
-import { copyEdit } from "./applyEdit";
+import { toHumanReadableName } from "./shared/nameGenerator";
+import { fromWire, WorkspaceEventType } from "./shared/events/workspace/event";
+import path from "path";
+import fs from "fs";
+import { handleWorkspaceEvent } from "./shared/actions/workspace";
 
 let _discoveredPeers = new Set();
 
@@ -21,28 +23,32 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
 
   const subscriber = await Promise.resolve(createNode([inputAddress.trim()]));
   logger().info("Subscriber set up successfully", {
-    id: generateName(subscriber.peerId.toString()),
+    id: toHumanReadableName(subscriber.peerId.toString()),
     addresses: subscriber.getMultiaddrs().map((x) => x.toString()),
   });
 
-  subscriber.pubsub.subscribe(Topics.ChangeFile);
-
-  subscriber.pubsub.addEventListener("message", (evt) => {
-    const topic = evt.detail.topic;
-    if (SkipTopics.has(topic)) {
-      return;
-    }
-
-    let data = JSON.parse(
-      uint8ArrayToString(evt.detail.data)
-    ) as vscode.TextDocumentChangeEvent;
-    copyEdit(data);
-
-    logger().info("Subscriber received message", {
-      data: data,
-      topic: evt.detail.topic,
-    });
+  subscriber.pubsub.subscribe(Topics.WorkspaceUpdates);
+  subscriber.pubsub.addEventListener("message", (event) => {
+    handleWorkspaceEvent(event)
   });
+
+  // subscriber.pubsub.subscribe(Topics.ChangeFile);
+  // subscriber.pubsub.addEventListener("message", (evt) => {
+  //   const topic = evt.detail.topic;
+  //   if (SkipTopics.has(topic)) {
+  //     return;
+  //   }
+
+  //   let data = JSON.parse(
+  //     uint8ArrayToString(evt.detail.data)
+  //   ) as vscode.TextDocumentChangeEvent;
+  //   copyEdit(data);
+
+  //   logger().info("Subscriber received message", {
+  //     data: data,
+  //     topic: evt.detail.topic,
+  //   });
+  // });
 
   subscriber.addEventListener("peer:discovery", (evt) => {
     const peerId = evt.detail.id.toString();
@@ -51,7 +57,7 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
     }
     _discoveredPeers.add(peerId);
     logger().info("Subscriber discovered peer", {
-      PeerId: generateName(peerId),
+      peerId: toHumanReadableName(peerId),
     });
   });
 }

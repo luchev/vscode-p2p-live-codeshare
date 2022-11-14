@@ -17,7 +17,7 @@ export function initLogger(ctx: vscode.ExtensionContext) {
 	_logger = getExtensionLogger({
 		extName: ExtensionName,
 		level: 'info',
-		logPath: ctx.logUri.path,
+		logPath: ctx.logUri.fsPath,
 		logOutputChannel: vscode.window.createOutputChannel(ExtensionName),
 		sourceLocationTracking: false,
 		logConsole: false,

@@ -6,7 +6,7 @@ import { noise } from "@chainsafe/libp2p-noise";
 import { bootstrap } from "@libp2p/bootstrap";
 import { pubsubPeerDiscovery } from "@libp2p/pubsub-peer-discovery";
 import { logger } from "./logger";
-import { generateName } from "./nameGenerator";
+import { toHumanReadableName } from "./nameGenerator";
 import { Components } from "libp2p/dist/src/components";
 import type { PeerDiscovery } from "@libp2p/interface-peer-discovery";
 
@@ -86,7 +86,7 @@ export async function startRelay() {
 
   logger().info("Relay started", {
     addresses: _relay.getMultiaddrs().map((x) => x.toString()),
-    id: generateName(_relay.peerId.toString()),
+    id: toHumanReadableName(_relay.peerId.toString()),
   });
 
   return _relay.getMultiaddrs().map((x) => x.toString());

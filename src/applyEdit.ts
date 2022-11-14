@@ -10,7 +10,6 @@ export async function copyEdit(e: vscode.TextDocumentChangeEvent) {
   }
 
   // TODO: file search has to be adapted
-  logger().info("-----", { x: e.document.fileName.replace(/^.*[\\\/]/, "") });
   vscode.workspace
     .findFiles(e.document.fileName.replace(/^.*[\\\/]/, ""))
     .then(
@@ -19,16 +18,21 @@ export async function copyEdit(e: vscode.TextDocumentChangeEvent) {
         if (uris.length === 1) {
           const wsedit = new vscode.WorkspaceEdit();
           for (let contentChange of e.contentChanges) {
-            vscode.workspace.openTextDocument(uris[0]).then((a: vscode.TextDocument) => {
-              vscode.window.showTextDocument(a, 1, false).then(e => {
-                  e.edit(edit => {
-                      edit.replace(contentChange.range.start, contentChange.text);
+            vscode.workspace.openTextDocument(uris[0]).then(
+              (a: vscode.TextDocument) => {
+                vscode.window.showTextDocument(a, 1, false).then((e) => {
+                  e.edit((edit) => {
+                    logger().info("-----", {'x': contentChange.range.start});
+                    edit.replace(new vscode.Position(0, 0), contentChange.text);
+                    //   edit.replace(contentChange.range.start, contentChange.text);
                   });
-              });
-          }, (error: any) => {
-              console.error(error);
-              debugger;
-          });
+                });
+              },
+              (error: any) => {
+                console.error(error);
+                debugger;
+              }
+            );
 
             // try {
             //   wsedit.insert(uris[0], contentChange.range.start, contentChange.text);

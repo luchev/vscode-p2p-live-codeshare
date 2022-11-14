@@ -1,6 +1,7 @@
 export enum Topics {
   ChangeFile = "change_file",
   CreateFile = "create_file",
+  WorkspaceUpdates = "workspace_updates",
 }
 
 export const ExtensionName = "p2p-share";
