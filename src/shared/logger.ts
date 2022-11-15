@@ -1,6 +1,6 @@
 import {getExtensionLogger} from "@vscode-logging/logger";
 import { IVSCodeExtLogger } from "@vscode-logging/types";
-import {ExtensionName} from "./constants";
+import {extensionName} from "./constants";
 import * as vscode from 'vscode';
 
 let _logger: IVSCodeExtLogger;
@@ -15,10 +15,10 @@ export function logger() {
 
 export function initLogger(ctx: vscode.ExtensionContext) {
 	_logger = getExtensionLogger({
-		extName: ExtensionName,
+		extName: extensionName,
 		level: 'info',
-		logPath: ctx.logUri.path,
-		logOutputChannel: vscode.window.createOutputChannel(ExtensionName),
+		logPath: ctx.logUri.fsPath,
+		logOutputChannel: vscode.window.createOutputChannel(extensionName),
 		sourceLocationTracking: false,
 		logConsole: false,
 	});

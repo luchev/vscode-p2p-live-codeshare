@@ -1,33 +1,59 @@
-import * as vscode from 'vscode';
-import {toString as uint8ArrayToString} from "uint8arrays/to-string";
-import {createNode} from './shared/createNode';
-import {Topics} from './shared/constants';
-import {multiaddr } from '@multiformats/multiaddr'
-import {logger} from './shared/logger';
+import * as vscode from "vscode";
+import { createNode } from "./shared/createNode";
+import { Topics } from "./shared/constants";
+import { logger } from "./shared/logger";
+import { toHumanReadableName } from "./shared/nameGenerator";
+import { handleWorkspaceEvent } from "./shared/actions/workspace";
+import { handlePeerDiscovery } from "./shared/actions/peer-discovery";
+import { Libp2p } from "libp2p";
+
+let subscriberName = "";
+let peer: Libp2p | undefined = undefined;
 
 async function setupSubscriber(ctx: vscode.ExtensionContext) {
-	const topic = Topics.ChangeFile;
-	const node1 = await Promise.resolve(createNode())
-	node1.pubsub.addEventListener("message", (evt) => {
-		logger().info(`node1 received: ${uint8ArrayToString(evt.detail.data)} on topic ${evt.detail.topic}`)
-		vscode.window.showInformationMessage(`node1 received: ${uint8ArrayToString(evt.detail.data)} on topic ${evt.detail.topic}`);
-	})
-	node1.pubsub.subscribe(topic)
+  if (peer !== undefined) {
+    logger().info("Subscriber already running");
+    return;
+  }
 
-	const inputAddress = await vscode.window.showInputBox({
-		placeHolder: "Multiaddress",
-		prompt: "Type in the host Multiaddress",
-	});
-	if (inputAddress === undefined || inputAddress === '') {
-		vscode.window.showErrorMessage('An Address is mandatory');
-	} else {
-		await node1.dial(multiaddr(inputAddress.trim()))
-	}
+  const inputAddress = await vscode.window.showInputBox({
+    placeHolder: "Relay",
+    prompt: "Type in the Relay address",
+  });
+
+  if (inputAddress === undefined || inputAddress === "") {
+    logger().warn("Invalid relay address provided to the subscriber");
+    return;
+  }
+
+  await createNode([inputAddress.trim()])
+    .then((node) => {
+      peer = node;
+      subscriberName = toHumanReadableName(peer.peerId.toString());
+      logger().info("Subscriber started", {
+        id: toHumanReadableName(peer.peerId.toString()),
+        addresses: peer.getMultiaddrs().map((x) => x.toString()),
+      });
+    })
+    .catch((err) => {
+      logger().warn("Subscriber failed to start", err);
+    });
+
+  const subscriber = peer!;
+
+  subscriber.addEventListener("peer:discovery", (event) =>
+    handlePeerDiscovery(event, subscriberName)
+  );
+  subscriber.pubsub.subscribe(Topics.workspaceUpdates);
+  subscriber.pubsub.addEventListener("message", (event) => {
+    handleWorkspaceEvent(event);
+  });
 }
 
 export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {
-	ctx.subscriptions.push(vscode.commands.registerCommand(
-		'p2p-share.setupSubscriber',
-		async () => setupSubscriber(ctx))
-	);
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand("p2p-share.setupSubscriber", async () =>
+      setupSubscriber(ctx)
+    )
+  );
 }
