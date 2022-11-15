@@ -3,14 +3,19 @@ import { createNode } from "./shared/createNode";
 import { Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
 import { toHumanReadableName } from "./shared/nameGenerator";
-import { fromWire, WorkspaceEventType } from "./shared/events/workspace/event";
-import path from "path";
-import fs from "fs";
 import { handleWorkspaceEvent } from "./shared/actions/workspace";
+import { handlePeerDiscovery } from "./shared/actions/peer-discovery";
+import { Libp2p } from "libp2p";
 
-let _discoveredPeers = new Set();
+let subscriberName = "";
+let peer: Libp2p | undefined = undefined;
 
 async function setupSubscriber(ctx: vscode.ExtensionContext) {
+  if (peer !== undefined) {
+    logger().info("Subscriber already running");
+    return;
+  }
+
   const inputAddress = await vscode.window.showInputBox({
     placeHolder: "Relay",
     prompt: "Type in the Relay address",
@@ -21,44 +26,27 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
     return;
   }
 
-  const subscriber = await Promise.resolve(createNode([inputAddress.trim()]));
-  logger().info("Subscriber set up successfully", {
-    id: toHumanReadableName(subscriber.peerId.toString()),
-    addresses: subscriber.getMultiaddrs().map((x) => x.toString()),
-  });
+  await createNode([inputAddress.trim()])
+    .then((node) => {
+      peer = node;
+      subscriberName = toHumanReadableName(peer.peerId.toString());
+      logger().info("Subscriber started", {
+        id: toHumanReadableName(peer.peerId.toString()),
+        addresses: peer.getMultiaddrs().map((x) => x.toString()),
+      });
+    })
+    .catch((err) => {
+      logger().warn("Subscriber failed to start", err);
+    });
 
+  const subscriber = peer!;
+
+  subscriber.addEventListener("peer:discovery", (event) =>
+    handlePeerDiscovery(event, subscriberName)
+  );
   subscriber.pubsub.subscribe(Topics.WorkspaceUpdates);
   subscriber.pubsub.addEventListener("message", (event) => {
-    handleWorkspaceEvent(event)
-  });
-
-  // subscriber.pubsub.subscribe(Topics.ChangeFile);
-  // subscriber.pubsub.addEventListener("message", (evt) => {
-  //   const topic = evt.detail.topic;
-  //   if (SkipTopics.has(topic)) {
-  //     return;
-  //   }
-
-  //   let data = JSON.parse(
-  //     uint8ArrayToString(evt.detail.data)
-  //   ) as vscode.TextDocumentChangeEvent;
-  //   copyEdit(data);
-
-  //   logger().info("Subscriber received message", {
-  //     data: data,
-  //     topic: evt.detail.topic,
-  //   });
-  // });
-
-  subscriber.addEventListener("peer:discovery", (evt) => {
-    const peerId = evt.detail.id.toString();
-    if (_discoveredPeers.has(peerId)) {
-      return;
-    }
-    _discoveredPeers.add(peerId);
-    logger().info("Subscriber discovered peer", {
-      peerId: toHumanReadableName(peerId),
-    });
+    handleWorkspaceEvent(event);
   });
 }
 

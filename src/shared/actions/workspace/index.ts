@@ -5,13 +5,14 @@ import { handleCreateFile } from "./create-file";
 import { workspace } from "vscode";
 import { handleDeleteFile } from "./delete-file";
 import {handleCreateDirectory} from "./create-directory";
+import {handleShareFile} from "./share-file";
 
 const workspaceActionHandlers = {
   [WorkspaceEventType.CreateFile]: handleCreateFile,
   [WorkspaceEventType.CreateDirectory]: handleCreateDirectory,
-  [WorkspaceEventType.DeleteFile]: handleDeleteFile,
+  [WorkspaceEventType.DeleteFileOrDirectory]: handleDeleteFile,
+  [WorkspaceEventType.ShareFile]: handleShareFile,
 
-  [WorkspaceEventType.ShareFile]: handleCreateDirectory,
   [WorkspaceEventType.SyncWorkspace]: handleCreateDirectory,
   [WorkspaceEventType.UpdateFile]: handleCreateDirectory,
 };
@@ -21,7 +22,7 @@ function handleWorkspaceEvent(event: any) {
   if (topic != Topics.WorkspaceUpdates) {
     return;
   }
-  let message = fromWire(event.detail.data);
+  const message = fromWire(event.detail.data);
 
   if (WorkspaceEventType[message.type] === undefined) {
     logger().info("Received invalid workspace event", {type: message.type});

@@ -3,19 +3,23 @@ import { Libp2p } from "libp2p";
 import { FileCreateEvent } from "vscode";
 import { Topics } from "../../constants";
 import { CreateDirectoryEvent, CreateFileEvent } from "../../events/workspace";
+import {toWire} from "../../events/workspace/event";
 import { logger } from "../../logger";
-import { serialize } from "../../object-serializer";
 import { getWorkspaceRelativePath } from "../../workspace-path";
 
-export function onFileCreated(publisher: Libp2p, event: FileCreateEvent) {
+export function onFileOrDirectoryCreated(
+  publisher: Libp2p,
+  event: FileCreateEvent
+) {
   for (const file of event.files) {
     const workspaceRelativePath = getWorkspaceRelativePath(file.fsPath);
+    
     const isFile = lstatSync(file.fsPath).isFile();
     if (isFile) {
       publisher.pubsub
         .publish(
           Topics.WorkspaceUpdates,
-          serialize(new CreateFileEvent(workspaceRelativePath))
+          toWire(new CreateFileEvent(workspaceRelativePath))
         )
         .then(() =>
           logger().info("Emit Create File Event", {
@@ -23,7 +27,7 @@ export function onFileCreated(publisher: Libp2p, event: FileCreateEvent) {
           })
         )
         .catch(() =>
-          logger().warn("Failed to publish creation of new file", {
+          logger().warn("Failed to emit Create File Event", {
             path: workspaceRelativePath,
           })
         );
@@ -31,7 +35,7 @@ export function onFileCreated(publisher: Libp2p, event: FileCreateEvent) {
       publisher.pubsub
         .publish(
           Topics.WorkspaceUpdates,
-          serialize(new CreateDirectoryEvent(workspaceRelativePath))
+          toWire(new CreateDirectoryEvent(workspaceRelativePath))
         )
         .then(() =>
           logger().info("Emit Create Directory Event", {
@@ -39,7 +43,7 @@ export function onFileCreated(publisher: Libp2p, event: FileCreateEvent) {
           })
         )
         .catch(() =>
-          logger().warn("Failed to publish creation of new file", {
+          logger().warn("Failed to emit Create Directory Event", {
             path: workspaceRelativePath,
           })
         );
