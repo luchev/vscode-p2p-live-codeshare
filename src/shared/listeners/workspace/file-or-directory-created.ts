@@ -3,7 +3,7 @@ import { Libp2p } from "libp2p";
 import { FileCreateEvent } from "vscode";
 import { Topics } from "../../constants";
 import { CreateDirectoryEvent, CreateFileEvent } from "../../events/workspace";
-import {toWire} from "../../events/workspace/event";
+import { toWire } from "../../events/workspace/event";
 import { logger } from "../../logger";
 import { getWorkspaceRelativePath } from "../../workspace-path";
 
@@ -13,38 +13,36 @@ export function onFileOrDirectoryCreated(
 ) {
   for (const file of event.files) {
     const workspaceRelativePath = getWorkspaceRelativePath(file.fsPath);
-    
     const isFile = lstatSync(file.fsPath).isFile();
+
     if (isFile) {
+      const message = new CreateFileEvent(workspaceRelativePath);
+
       publisher.pubsub
-        .publish(
-          Topics.WorkspaceUpdates,
-          toWire(new CreateFileEvent(workspaceRelativePath))
-        )
+        .publish(Topics.WorkspaceUpdates, toWire(message))
         .then(() =>
           logger().info("Emit Create File Event", {
-            path: workspaceRelativePath,
+            event: message,
           })
         )
         .catch(() =>
           logger().warn("Failed to emit Create File Event", {
-            path: workspaceRelativePath,
+            event: message,
           })
         );
     } else {
+      const message = new CreateDirectoryEvent(workspaceRelativePath);
+
       publisher.pubsub
-        .publish(
-          Topics.WorkspaceUpdates,
-          toWire(new CreateDirectoryEvent(workspaceRelativePath))
-        )
+        .publish(Topics.WorkspaceUpdates, toWire(message))
         .then(() =>
           logger().info("Emit Create Directory Event", {
-            path: workspaceRelativePath,
+            event: message,
           })
         )
         .catch(() =>
           logger().warn("Failed to emit Create Directory Event", {
-            path: workspaceRelativePath,
+            event: message,
           })
         );
     }

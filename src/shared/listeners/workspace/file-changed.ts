@@ -1,6 +1,7 @@
+import { constants } from "buffer";
 import { Libp2p } from "libp2p";
 import { TextDocumentChangeEvent } from "vscode";
-import { Topics } from "../../constants";
+import { SkipFileNames, Topics } from "../../constants";
 import { ShareFileEvent } from "../../events/workspace";
 import { toWire } from "../../events/workspace/event";
 import { logger } from "../../logger";
@@ -10,32 +11,25 @@ export function onFileChanged(
   publisher: Libp2p,
   event: TextDocumentChangeEvent
 ) {
-  if (
-    event.document.fileName ==
-    "extension-output-undefined_publisher.p2p-share-#1-p2p-share"
-  ) {
+  if (SkipFileNames.has(event.document.fileName)) {
     return;
   }
 
-  const workspaceRelativePath = getWorkspaceRelativePath(
-    event.document.fileName
+  const message = new ShareFileEvent(
+    getWorkspaceRelativePath(event.document.fileName),
+    event.document.getText()
   );
 
   publisher.pubsub
-    .publish(
-      Topics.WorkspaceUpdates,
-      toWire(
-        new ShareFileEvent(workspaceRelativePath, event.document.getText())
-      )
-    )
+    .publish(Topics.WorkspaceUpdates, toWire(message))
     .then(() =>
       logger().info("Emit Share File Event", {
-        path: workspaceRelativePath,
+        event: message,
       })
     )
     .catch(() =>
       logger().warn("Failed to emit Share File Event", {
-        path: workspaceRelativePath,
+        event: message,
       })
     );
 }

@@ -13,6 +13,7 @@ const workspaceActionHandlers = {
   [WorkspaceEventType.DeleteFileOrDirectory]: handleDeleteFile,
   [WorkspaceEventType.ShareFile]: handleShareFile,
 
+  // TODO add actions
   [WorkspaceEventType.SyncWorkspace]: handleCreateDirectory,
   [WorkspaceEventType.UpdateFile]: handleCreateDirectory,
 };

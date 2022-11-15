@@ -12,20 +12,21 @@ export function onFileOrDirectoryDeleted(
 ) {
   for (const file of event.files) {
     const workspaceRelativePath = getWorkspaceRelativePath(file.fsPath);
+    const message = new DeleteFileEvent(workspaceRelativePath);
 
     publisher.pubsub
       .publish(
         Topics.WorkspaceUpdates,
-        toWire(new DeleteFileEvent(workspaceRelativePath))
+        toWire(message)
       )
       .then(() =>
         logger().info("Emit Delete File/Directory Event", {
-          path: workspaceRelativePath,
+          event: message,
         })
       )
       .catch(() =>
         logger().warn("Failed to emit Delete File/Directory Event ", {
-          path: file.fsPath,
+          event: message,
         })
       );
   }
