@@ -50,7 +50,7 @@ let _relay: Libp2p;
 // startRelay creates a 3rd node, for local testing
 // So the subscriber and the peer can connect through it
 // This allows testing of the auto discovery mechanism
-export async function startRelay() {
+async function startRelay() {
   if (_relay) {
     return _relay.getMultiaddrs().map((x) => x.toString());
   }

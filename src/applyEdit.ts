@@ -3,7 +3,7 @@ import { logger } from "./shared/logger";
 
 // TODO: we might need to change the type annotation if the deserialized messages
 // cannot be simply loaded into a new instancee
-export async function copyEdit(e: vscode.TextDocumentChangeEvent) {
+async function copyEdit(e: vscode.TextDocumentChangeEvent) {
   // no contentChanges means there is nothing to copy
   if (e.contentChanges.length === 0) {
     return;

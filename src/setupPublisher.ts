@@ -32,6 +32,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
     });
 
   const publisher = peer!;
+
   publisher.addEventListener("peer:discovery", (event) =>
     handlePeerDiscovery(event, publisherName)
   );
