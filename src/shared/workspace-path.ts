@@ -14,3 +14,7 @@ export function getWorkspaceRelativePath(filePath: string) {
     .split(path.sep)
     .filter((x) => x !== "");
 }
+
+export function getWorkspaceRoot() {
+  return workspace.workspaceFolders?.[0].uri.fsPath!;
+}

@@ -3,11 +3,11 @@ import path from "path";
 import {workspace} from "vscode";
 import {CreateFileEvent} from "../../events/workspace";
 import {WorkspaceEvent} from "../../events/workspace/event";
+import {getWorkspaceRoot} from "../../workspace-path";
 
 export function handleCreateFile(message: WorkspaceEvent) {
   const params = message as CreateFileEvent;
-  const workspaceDir = workspace.workspaceFolders?.[0].uri.fsPath!;
-  const absolutePath = path.join(workspaceDir, ...params.path);
+  const absolutePath = path.join(getWorkspaceRoot(), ...params.path);
   if (!existsSync(absolutePath)) {
     writeFileSync(absolutePath, '');
   }
