@@ -5,7 +5,7 @@ export class CreateDirectoryEvent implements WorkspaceEvent {
   path: string[];
 
   constructor(path: string[]) {
-    this.type = WorkspaceEventType.CreateDirectory;
+    this.type = WorkspaceEventType.createDirectory;
     this.path = path;
   }
 }

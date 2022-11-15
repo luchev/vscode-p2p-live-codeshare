@@ -5,12 +5,12 @@ import {DeleteFileEvent} from "./delete-file";
 import {ShareFileEvent} from "./share-file";
 
 export enum WorkspaceEventType {
-    CreateFile,
-    CreateDirectory,
-    DeleteFileOrDirectory,
-    ShareFile,
-    UpdateFile,
-    SyncWorkspace,
+    createFile,
+    createDirectory,
+    deleteFileOrDirectory,
+    shareFile,
+    updateFile,
+    syncWorkspace,
 }
 
 export interface WorkspaceEvent {
@@ -20,16 +20,16 @@ export interface WorkspaceEvent {
 export function fromWire(bytes: any) {
     const event = deserialize<WorkspaceEvent>(bytes);
     switch (event.type) {
-        case WorkspaceEventType.CreateDirectory:
+        case WorkspaceEventType.createDirectory:
             return event as CreateDirectoryEvent;
-        case WorkspaceEventType.CreateFile:
+        case WorkspaceEventType.createFile:
             return event as CreateFileEvent;
-        case WorkspaceEventType.DeleteFileOrDirectory:
+        case WorkspaceEventType.deleteFileOrDirectory:
             return event as DeleteFileEvent;
-        case WorkspaceEventType.ShareFile:
+        case WorkspaceEventType.shareFile:
             return event as ShareFileEvent;
         default:
-            throw new Error(`unexpected event type: ${event.type}`)
+            throw new Error(`unexpected event type: ${event.type}`);
     }
 }
 

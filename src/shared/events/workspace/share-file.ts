@@ -6,7 +6,7 @@ export class ShareFileEvent implements WorkspaceEvent {
   content: string;
 
   constructor(path: string[], content: string) {
-    this.type = WorkspaceEventType.ShareFile;
+    this.type = WorkspaceEventType.shareFile;
     this.path = path;
     this.content = content;
   }

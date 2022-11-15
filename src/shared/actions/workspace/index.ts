@@ -8,19 +8,19 @@ import {handleCreateDirectory} from "./create-directory";
 import {handleShareFile} from "./share-file";
 
 const workspaceActionHandlers = {
-  [WorkspaceEventType.CreateFile]: handleCreateFile,
-  [WorkspaceEventType.CreateDirectory]: handleCreateDirectory,
-  [WorkspaceEventType.DeleteFileOrDirectory]: handleDeleteFile,
-  [WorkspaceEventType.ShareFile]: handleShareFile,
+  [WorkspaceEventType.createFile]: handleCreateFile,
+  [WorkspaceEventType.createDirectory]: handleCreateDirectory,
+  [WorkspaceEventType.deleteFileOrDirectory]: handleDeleteFile,
+  [WorkspaceEventType.shareFile]: handleShareFile,
 
   // TODO add actions
-  [WorkspaceEventType.SyncWorkspace]: handleCreateDirectory,
-  [WorkspaceEventType.UpdateFile]: handleCreateDirectory,
+  [WorkspaceEventType.syncWorkspace]: handleCreateDirectory,
+  [WorkspaceEventType.updateFile]: handleCreateDirectory,
 };
 
 function handleWorkspaceEvent(event: any) {
   const topic = event.detail.topic;
-  if (topic != Topics.WorkspaceUpdates) {
+  if (topic !== Topics.workspaceUpdates) {
     return;
   }
   const message = fromWire(event.detail.data);

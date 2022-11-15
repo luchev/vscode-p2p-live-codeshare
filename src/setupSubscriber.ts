@@ -44,7 +44,7 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
   subscriber.addEventListener("peer:discovery", (event) =>
     handlePeerDiscovery(event, subscriberName)
   );
-  subscriber.pubsub.subscribe(Topics.WorkspaceUpdates);
+  subscriber.pubsub.subscribe(Topics.workspaceUpdates);
   subscriber.pubsub.addEventListener("message", (event) => {
     handleWorkspaceEvent(event);
   });

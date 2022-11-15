@@ -16,7 +16,7 @@ export function onFileOrDirectoryDeleted(
 
     publisher.pubsub
       .publish(
-        Topics.WorkspaceUpdates,
+        Topics.workspaceUpdates,
         toWire(message)
       )
       .then(() =>

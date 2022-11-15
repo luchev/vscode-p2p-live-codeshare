@@ -5,7 +5,7 @@ export class DeleteFileEvent implements WorkspaceEvent {
   path: string[];
 
   constructor(path: string[]) {
-    this.type = WorkspaceEventType.DeleteFileOrDirectory;
+    this.type = WorkspaceEventType.deleteFileOrDirectory;
     this.path = path;
   }
 }

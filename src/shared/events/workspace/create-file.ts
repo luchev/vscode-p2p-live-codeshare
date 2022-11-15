@@ -5,7 +5,7 @@ export class CreateFileEvent implements WorkspaceEvent {
   path: string[];
 
   constructor(path: string[]) {
-    this.type = WorkspaceEventType.CreateFile;
+    this.type = WorkspaceEventType.createFile;
     this.path = path;
   }
 }

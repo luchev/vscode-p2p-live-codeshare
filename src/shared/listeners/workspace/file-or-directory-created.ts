@@ -19,7 +19,7 @@ export function onFileOrDirectoryCreated(
       const message = new CreateFileEvent(workspaceRelativePath);
 
       publisher.pubsub
-        .publish(Topics.WorkspaceUpdates, toWire(message))
+        .publish(Topics.workspaceUpdates, toWire(message))
         .then(() =>
           logger().info("Emit Create File Event", {
             event: message,
@@ -34,7 +34,7 @@ export function onFileOrDirectoryCreated(
       const message = new CreateDirectoryEvent(workspaceRelativePath);
 
       publisher.pubsub
-        .publish(Topics.WorkspaceUpdates, toWire(message))
+        .publish(Topics.workspaceUpdates, toWire(message))
         .then(() =>
           logger().info("Emit Create Directory Event", {
             event: message,
