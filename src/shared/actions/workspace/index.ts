@@ -15,10 +15,9 @@ const workspaceActionHandlers = {
 
   // TODO add actions
   [WorkspaceEventType.syncWorkspace]: handleCreateDirectory,
-  [WorkspaceEventType.updateFile]: handleCreateDirectory,
 };
 
-function handleWorkspaceEvent(event: any) {
+export function handleWorkspaceEvent(event: any) {
   const topic = event.detail.topic;
   if (topic !== Topics.workspaceUpdates) {
     return;
@@ -43,5 +42,3 @@ function handleWorkspaceEvent(event: any) {
 
   workspaceActionHandlers[message.type](message);
 }
-
-export { handleWorkspaceEvent };

@@ -1,7 +1,6 @@
 import { existsSync, lstatSync, rmdirSync, rmSync } from "fs";
 import path from "path";
-import { workspace } from "vscode";
-import { CreateFileEvent, DeleteFileEvent } from "../../events/workspace";
+import { DeleteFileEvent } from "../../events/workspace";
 import { WorkspaceEvent } from "../../events/workspace/event";
 import { getWorkspaceRoot } from "../../workspace-path";
 

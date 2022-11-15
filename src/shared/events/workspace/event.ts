@@ -9,7 +9,6 @@ export enum WorkspaceEventType {
     createDirectory,
     deleteFileOrDirectory,
     shareFile,
-    updateFile,
     syncWorkspace,
 }
 

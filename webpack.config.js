@@ -42,6 +42,8 @@ const extensionConfig = {
   },
   experiments: {
     topLevelAwait: true,
+    asyncWebAssembly: true,
+    syncWebAssembly: true,
   },
   devtool: 'nosources-source-map',
   infrastructureLogging: {
