@@ -9,8 +9,7 @@ export function getWorkspaceRelativePath(filePath: string) {
     throw new Error("no active workspace");
   }
 
-  return path
-    .resolve(filePath.replace(workspaceDir, ""))
+  return filePath.replace(workspaceDir, "")
     .split(path.sep)
     .filter((x) => x !== "");
 }
