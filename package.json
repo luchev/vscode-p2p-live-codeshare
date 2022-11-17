@@ -11,7 +11,8 @@
   ],
   "activationEvents": [
     "onCommand:p2p-share.setupSubscriber",
-    "onCommand:p2p-share.setupPublisher"
+    "onCommand:p2p-share.setupPublisher",
+    "onView:p2p-share"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -23,6 +24,39 @@
       {
         "command": "p2p-share.setupPublisher",
         "title": "zp2p: Setup Publisher"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "p2p-share",
+          "title": "Peer to Peer Share",
+          "icon": "resources/folder.png"
+        }
+      ]
+    },
+    "views": {
+      "p2p-share": [
+        {
+          "id": "welcome",
+          "name": "Welcome"
+        },
+        {
+          "id": "session",
+          "name": "Session"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "welcome",
+        "contents": "Start a subscriber node.\n[Setup Subscriber](command:p2p-share.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:p2p-share.setupPublisher)",
+        "when": "isLinux||isWindows"
+      },
+      {
+        "view": "session2",
+        "contents": "Join a network.",
+        "when": "isLinux||isWindows"
       }
     ]
   },
