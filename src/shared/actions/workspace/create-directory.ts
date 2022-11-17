@@ -7,13 +7,16 @@ import {getWorkspaceRoot} from "../../workspace-path";
 export function handleCreateDirectory(message: WorkspaceEvent) {
   const params = message as CreateDirectoryEvent;
   const absolutePath = path.join(getWorkspaceRoot(), ...params.path);
-  ensureDirectoryExistence(absolutePath);
+  
   if (!existsSync(absolutePath)) {
+    mkdirSync(absolutePath);
+  } else {
+    ensureDirectoryExistence(absolutePath);
     mkdirSync(absolutePath);
   }
 }
 
-export function ensureDirectoryExistence(filePath: string) {
+function ensureDirectoryExistence(filePath: string) {
   var dirname = path.dirname(filePath);
   if (existsSync(dirname)) {
     return true;
