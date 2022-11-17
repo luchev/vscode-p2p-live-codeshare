@@ -9,6 +9,7 @@ import {
   onFileOrDirectoryDeleted,
 } from "./shared/listeners/workspace";
 import { onFileChanged } from "./shared/listeners/workspace/file-changed";
+import { p2pShareProvider } from './sessionData';
 
 let publisherName = "";
 let peer: Libp2p | undefined = undefined;
@@ -26,6 +27,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
         id: publisherName,
         addresses: peer.getMultiaddrs().map((x) => x.toString()),
       });
+      p2pShareProvider.addItem(publisherName);
     })
     .catch(() => {
       logger().warn("Publisher failed to start");
