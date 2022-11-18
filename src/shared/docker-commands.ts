@@ -2,12 +2,19 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
 import { log, logger } from './logger';
+import { Stream } from '@libp2p/interface-connection';
+
+import { pipe } from 'it-pipe';
+import map from 'it-map';
+import * as lp from 'it-length-prefixed'
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 
 export class Docker {
     constructor() { }
 
     @log()
-    public static async buildAndStartDockerContainer(context: vscode.ExtensionContext, folderPath: string): Promise<void> {
+    public static async buildAndStartDockerContainer(context: vscode.ExtensionContext, folderPath: string, stream: Stream): Promise<void> {
         const shellOpts = { cwd: context.extensionPath };
 
         // Glob pattern to search for dockerfiles, under the workspace folder
@@ -37,29 +44,45 @@ export class Docker {
         const containerName = relativeFolderPath.replaceAll('/', '-');
 
         // Kill possible container with same name.
-        this.spawnSync("powershell.exe", [`docker rm -f ${containerName}`], shellOpts);
+        await this.spawnSync("powershell.exe", [`docker rm -f ${containerName}`], shellOpts, stream);
 
         // Build new image
-        this.spawnSync("powershell.exe", [`docker build -t ${containerName} ${relativeFolderPath}`], shellOpts);
+        await this.spawnSync("powershell.exe", [`docker build -t ${containerName} ${relativeFolderPath}`], shellOpts, stream);
 
         // Run the image
-        this.spawn("powershell.exe", [`docker run -p "80" --name ${containerName} ${containerName}`], shellOpts);
+        //this.spawn("powershell.exe", [`docker run -p "80" --name ${containerName} ${containerName}`], shellOpts, stream);
     }
 
     @log()
-    public static spawnSync(cmd: string, args: any[], opts: cp.SpawnOptions) {
+    public static async spawnSync(cmd: string, args: any[], opts: cp.SpawnOptions, stream: Stream) {
         const spawn = cp.spawnSync(cmd, args, opts);
         if (spawn.error) {
-            console.log("ERROR: ", spawn.error);
+            const errorMsg = `ERROR: ${spawn.error}`;
+            //console.log(errorMsg);
+            this.send(stream, errorMsg);
         }
-        console.log("stdout: ", spawn.stdout.toString());
-        console.log("stderr: ", spawn.stderr.toString());
-        console.log("exit code: ", spawn.status);
+        const stdOutMsg = `stdout: ${spawn.stdout.toString()}`;
+        //console.log(stdOutMsg);
+        this.send(stream, stdOutMsg);
+
+        const stdErrMsg = `stderr: ${spawn.stderr.toString()}`;
+        //console.log(stdErrMsg);
+        this.send(stream, stdErrMsg);
+
+        const exitCodeMsg = `exit code: ${spawn.status}`;
+        //console.log(exitCodeMsg);
+        this.send(stream, exitCodeMsg);
     }
 
     @log()
-    public static spawn(cmd: string, args: any[], opts: cp.SpawnOptions) {
+    public static spawn(cmd: string, args: any[], opts: cp.SpawnOptions, stream: Stream) {
         const runner = cp.spawn(cmd, args, opts);
+
+        pipe(
+            runner.stdout || '',
+            (source) => map(source, (buf) => uint8ArrayFromString(buf.subarray())),
+            stream
+        );
 
         // Pipe outputs.
         runner.stdout!.on('data', (data) => {
@@ -73,5 +96,12 @@ export class Docker {
         runner.on('close', (code) => {
             console.log(`child process exited with code ${code}`);
         });
+    }
+
+    private static send(stream: Stream, content: string) {
+        pipe(
+            [uint8ArrayFromString(content)],
+            stream
+        );
     }
 }

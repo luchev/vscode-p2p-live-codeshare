@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { createNode } from './shared/createNode';
+import { addCommonListeners, createNode } from './shared/createNode';
 import { Topics } from './shared/constants';
 import { multiaddr } from '@multiformats/multiaddr';
 import { logger } from './shared/logger';
@@ -10,11 +10,13 @@ import { peer2 } from './shared/peers';
 import { createFromProtobuf } from '@libp2p/peer-id-factory';
 import { Connection } from '@libp2p/interface-connection';
 import { pipe } from 'it-pipe';
+import { Libp2p } from 'libp2p';
+import { handleReceivedDockerContent } from './shared/dockerfiles-receiver';
 
-async function setupSubscriber(ctx: vscode.ExtensionContext) {
+export async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	const peerid = await createFromProtobuf(uint8ArrayFromString(peer2, "base64"));
 	const topic = Topics.ChangeFile;
-	const node1 = await Promise.resolve(createNode(peerid));
+	const node1 = await Promise.resolve(createNode(peerid, 9000));
 
 	node1.pubsub.addEventListener("message", (evt) => {
 		console.log('evt.detail', evt.detail as Message);
@@ -23,17 +25,7 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	});
 	node1.pubsub.subscribe(topic);
 
-	node1.handle('/zip', ({ stream, connection }) => {
-		console.log(`Message from ${connection.remotePeer}`);
-		pipe(
-			stream,
-			async function (source) {
-				for await (const msg of source) {
-					console.log(uint8ArrayToString(msg.subarray()));
-				}
-			}
-		);
-	});
+	addCommonListeners(ctx, node1);
 
 	const inputAddress = await vscode.window.showInputBox({
 		placeHolder: "Multiaddress",
@@ -44,6 +36,8 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	} else {
 		await node1.dial(multiaddr(inputAddress.trim()));
 	}
+
+	subscribeNode = node1;
 }
 
 export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {
@@ -52,3 +46,5 @@ export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {
 		async () => setupSubscriber(ctx))
 	);
 }
+
+export let subscribeNode: Libp2p;

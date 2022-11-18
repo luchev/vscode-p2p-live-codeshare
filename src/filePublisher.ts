@@ -4,7 +4,13 @@ import { TextEncoder } from 'util';
 import { DockerFilesMessage } from './models/DockerFilesMessage';
 import { handleReceivedDockerContent } from './shared/dockerfiles-receiver';
 import { logger } from './shared/logger';
-
+import { registerSetupSubscriber, setupSubscriber, subscribeNode } from './setupSubscriber';
+import { pipe } from 'it-pipe';
+import map from 'it-map';
+import * as lp from 'it-length-prefixed'
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
+import { randomInt } from 'crypto';
 
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
@@ -35,11 +41,42 @@ async function publishFiles(context: vscode.ExtensionContext) {
 
 		let uint8Array = new TextEncoder().encode(jsonMsg);
 
+		let selfNode = subscribeNode;
+
+		// if(!selfNode) {await setupSubscriber(context);}
+
+		let peers = await selfNode.peerStore.all();
+		let dockerablePeers = peers.filter(async (p) => {
+			let tags = await selfNode.peerStore.getTags(p.id);
+			if (tags.filter((t) => t.name === 'dockerable').length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		});
+		let peer = dockerablePeers[randomInt(dockerablePeers.length)];
+		let stream = await selfNode.dialProtocol(peer.id, '/zip');
+		pipe(
+			stream,
+			async function (source) {
+                let str = '';
+                for await (const msg of source) {
+                    str += uint8ArrayToString(msg.subarray());
+                }
+				console.log('> ', str);
+            }
+		);
+		pipe(
+			[uint8Array],
+			stream
+		);
+
+		// stream.close();
 		// send message to docker machine
 		logger().info(`Sent zipped folder: ${ws.name}`);
 		vscode.window.showInformationMessage(`Sent zipped folder: ${ws.name}`);
 
-		await handleReceivedDockerContent(context, uint8Array);
+		// await handleReceivedDockerContent(context, uint8Array);
 
 	} else {
 		vscode.window.showErrorMessage('Found no applicable workspace folders to work with :(');

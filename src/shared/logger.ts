@@ -20,7 +20,7 @@ export function initLogger(ctx: vscode.ExtensionContext) {
 		logPath: ctx.logUri.fsPath,
 		logOutputChannel: vscode.window.createOutputChannel(ExtensionName),
 		sourceLocationTracking: false,
-		logConsole: true,
+		logConsole: false,
 	});
 	isInitialized = true;
 }

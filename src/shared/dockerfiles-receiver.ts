@@ -6,8 +6,9 @@ import { nameof } from './nameof';
 import { Docker } from './docker-commands';
 import AdmZip from 'adm-zip';
 import { logger } from './logger';
+import { Stream } from '@libp2p/interface-connection';
 
-export async function handleReceivedDockerContent(context: vscode.ExtensionContext, uint8Array: Uint8Array) {
+export async function handleReceivedDockerContent(context: vscode.ExtensionContext, uint8Array: Uint8Array, stream: Stream) {
 	//on docker machine
 	logger().info('Received zipped content!');
 	vscode.window.showInformationMessage('Received zipped content!');
@@ -23,5 +24,5 @@ export async function handleReceivedDockerContent(context: vscode.ExtensionConte
 	let filePath = path.join(context.extensionPath, recivedMessage.userId, recivedMessage.zipName);
 	zip2.extractAllTo(filePath, true);
 
-	await Docker.buildAndStartDockerContainer(context, filePath);
+	await Docker.buildAndStartDockerContainer(context, filePath, stream);
 }

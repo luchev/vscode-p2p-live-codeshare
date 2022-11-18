@@ -65,6 +65,7 @@
     "@libp2p/mplex": "^7.0.0",
     "@libp2p/peer-id-factory": "^1.0.19",
     "@libp2p/tcp": "^5.0.1",
+    "@libp2p/websockets": "^5.0.0",
     "@vscode-logging/logger": "^1.2.3",
     "adm-zip": "^0.5.9",
     "libp2p": "^0.40.0"
