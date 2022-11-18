@@ -58,13 +58,16 @@ async function publishFiles(context: vscode.ExtensionContext) {
 		let stream = await selfNode.dialProtocol(peer.id, '/zip');
 		pipe(
 			stream,
-			async function (source) {
-                let str = '';
-                for await (const msg of source) {
-                    str += uint8ArrayToString(msg.subarray());
-                }
-				console.log('> ', str);
-            }
+			(source) => {
+				return (async function* () {
+					for await (const buf of source) { yield uint8ArrayToString(buf.subarray()); }
+				})();
+			},
+			async (source) => {
+				for await (const msg of source) {
+					console.log("> " + msg);
+				}
+			}
 		);
 		pipe(
 			[uint8Array],

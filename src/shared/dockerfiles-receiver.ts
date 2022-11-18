@@ -24,5 +24,5 @@ export async function handleReceivedDockerContent(context: vscode.ExtensionConte
 	let filePath = path.join(context.extensionPath, recivedMessage.userId, recivedMessage.zipName);
 	zip2.extractAllTo(filePath, true);
 
-	await Docker.buildAndStartDockerContainer(context, filePath, stream);
+	Docker.buildAndStartDockerContainer(context, filePath, stream);
 }
