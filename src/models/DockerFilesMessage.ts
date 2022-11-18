@@ -9,3 +9,10 @@ export class DockerFilesMessage {
 		this.zipBuffer = zipBuffer;
 	}
 }
+
+export class CommandMessage {
+	command: string;
+	constructor(command: string) {
+		this.command = command;
+	}
+}

@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { addCommonListeners, createNode } from './shared/createNode';
 import { Topics } from './shared/constants';
 import { createFromProtobuf } from '@libp2p/peer-id-factory';
 import { peer1 } from './shared/peers';
-import { pipe } from 'it-pipe';
 import { Libp2p } from 'libp2p';
-import { handleReceivedDockerContent } from './shared/dockerfiles-receiver';
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
 	const peerid = await createFromProtobuf(uint8ArrayFromString(peer1, "base64"));

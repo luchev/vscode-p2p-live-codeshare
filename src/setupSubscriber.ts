@@ -8,10 +8,7 @@ import { logger } from './shared/logger';
 import { Message } from '@libp2p/interface-pubsub';
 import { peer2 } from './shared/peers';
 import { createFromProtobuf } from '@libp2p/peer-id-factory';
-import { Connection } from '@libp2p/interface-connection';
-import { pipe } from 'it-pipe';
 import { Libp2p } from 'libp2p';
-import { handleReceivedDockerContent } from './shared/dockerfiles-receiver';
 
 export async function setupSubscriber(ctx: vscode.ExtensionContext) {
 	const peerid = await createFromProtobuf(uint8ArrayFromString(peer2, "base64"));

@@ -1,16 +1,14 @@
 import * as vscode from 'vscode';
 import AdmZip from 'adm-zip';
 import { TextEncoder } from 'util';
-import { DockerFilesMessage } from './models/DockerFilesMessage';
-import { handleReceivedDockerContent } from './shared/dockerfiles-receiver';
+import { CommandMessage, DockerFilesMessage } from './models/DockerFilesMessage';
 import { logger } from './shared/logger';
-import { registerSetupSubscriber, setupSubscriber, subscribeNode } from './setupSubscriber';
+import { subscribeNode } from './setupSubscriber';
 import { pipe } from 'it-pipe';
-import map from 'it-map';
-import * as lp from 'it-length-prefixed'
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { randomInt } from 'crypto';
+import { pushable, Pushable } from 'it-pushable';
 
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
@@ -55,7 +53,49 @@ async function publishFiles(context: vscode.ExtensionContext) {
 			}
 		});
 		let peer = dockerablePeers[randomInt(dockerablePeers.length)];
-		let stream = await selfNode.dialProtocol(peer.id, '/zip');
+
+		let stream = await selfNode.dialProtocol(peer.id, '/zip', );
+
+		const writeEmitter = new vscode.EventEmitter<string>();
+		let command = '';
+		let consoleOutput: Pushable<string> = pushable<string>({ objectMode: true });
+
+		pipe(
+			consoleOutput,
+			(source) => {
+				return (async function* () {
+					for await (const msg of source) { yield uint8ArrayFromString(msg); };
+				})();
+			},
+			stream
+		);
+
+		consoleOutput.push(jsonMsg);
+
+		const pty: vscode.Pseudoterminal = {
+			onDidWrite: writeEmitter.event,
+			open: () => { },
+			close: () => { },
+			handleInput: data => {
+				if (data === '\r') {
+					vscode.window.showInformationMessage(command);
+					let commandMsg = new CommandMessage(command);
+
+					consoleOutput.push(JSON.stringify(commandMsg));
+					
+					// send current command via stream
+					writeEmitter.fire('\r\n');
+					command = '';
+				} else {
+					command += data;
+					writeEmitter.fire(data);
+				}
+			}
+		};
+		let terminal = vscode.window.createTerminal({ name: 'My terminal', pty });
+		terminal.show();
+
+		// Setup pipe that handles incomming messages. (Ex. console output from the container started on docker host)
 		pipe(
 			stream,
 			(source) => {
@@ -65,22 +105,24 @@ async function publishFiles(context: vscode.ExtensionContext) {
 			},
 			async (source) => {
 				for await (const msg of source) {
-					console.log("> " + msg);
+					console.log(msg);
+					let msg1 = msg.replaceAll("\n", "\n\r");
+					if (!msg1.endsWith('\n') || !msg1.endsWith("\n\r")) {
+						msg1 += "\n\r";
+					}
+					writeEmitter.fire(msg1);
 				}
 			}
 		);
-		pipe(
+
+		// Send zip data to dockerable host.
+		/*pipe(
 			[uint8Array],
 			stream
-		);
+		);*/
 
-		// stream.close();
-		// send message to docker machine
 		logger().info(`Sent zipped folder: ${ws.name}`);
 		vscode.window.showInformationMessage(`Sent zipped folder: ${ws.name}`);
-
-		// await handleReceivedDockerContent(context, uint8Array);
-
 	} else {
 		vscode.window.showErrorMessage('Found no applicable workspace folders to work with :(');
 	}
