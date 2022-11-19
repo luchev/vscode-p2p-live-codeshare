@@ -27,7 +27,6 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
         id: publisherName,
         addresses: peer.getMultiaddrs().map((x) => x.toString()),
       });
-      p2pShareProvider.addItem(publisherName);
     })
     .catch(() => {
       logger().warn("Publisher failed to start");

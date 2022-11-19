@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from './shared/logger';
 
 class PeerNodeProvider implements vscode.TreeDataProvider<Peer> {
 
@@ -12,6 +13,15 @@ class PeerNodeProvider implements vscode.TreeDataProvider<Peer> {
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
+	}
+
+	getNode(): Thenable<Peer> {
+		if (this.peers.length === 0) {
+			logger().error("There is no registered peer in the tree view.");
+			return new Promise(resolve => {logger().info("shit");});
+		} else {
+			return new Promise(resolve => {logger().info("works");return this.peers[0];});
+		}
 	}
 
 	getTreeItem(element: Peer): vscode.TreeItem {
@@ -39,6 +49,6 @@ class Peer extends vscode.TreeItem {
 	contextValue = 'peer';
 }
 
-var p2pShareProvider = new PeerNodeProvider();
+const p2pShareProvider = new PeerNodeProvider();
 
 export {p2pShareProvider};

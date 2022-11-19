@@ -35,7 +35,6 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
         id: subscriberName,
         addresses: peer.getMultiaddrs().map((x) => x.toString()),
       });
-      p2pShareProvider.addItem(subscriberName);
     })
     .catch((err) => {
       logger().warn("Subscriber failed to start", err);
