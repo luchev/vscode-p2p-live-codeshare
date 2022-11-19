@@ -15,7 +15,7 @@ export function handlePeerDiscovery(event: any, peerName: string) {
   }
 
   _discoveredPeersMap[peerName].add(peerId);
-  p2pShareProvider.addItem(peerName);
+  p2pShareProvider.addItem(peerId);
   p2pShareProvider.refresh();
   logger().info(`${peerName} discovered ${peerId}`);
 }
