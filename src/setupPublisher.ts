@@ -9,6 +9,7 @@ import {
   onFileOrDirectoryDeleted,
 } from "./shared/listeners/workspace";
 import { onFileChanged } from "./shared/listeners/workspace/file-changed";
+import { p2pShareProvider } from './sessionData';
 
 let publisherName = "";
 let peer: Libp2p | undefined = undefined;

@@ -6,6 +6,7 @@ import { toHumanReadableName } from "./shared/nameGenerator";
 import { handleWorkspaceEvent } from "./shared/actions/workspace";
 import { handlePeerDiscovery } from "./shared/actions/peer-discovery";
 import { Libp2p } from "libp2p";
+import { p2pShareProvider } from './sessionData';
 
 let subscriberName = "";
 let peer: Libp2p | undefined = undefined;
@@ -31,7 +32,7 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
       peer = node;
       subscriberName = toHumanReadableName(peer.peerId.toString());
       logger().info("Subscriber started", {
-        id: toHumanReadableName(peer.peerId.toString()),
+        id: subscriberName,
         addresses: peer.getMultiaddrs().map((x) => x.toString()),
       });
     })

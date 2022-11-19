@@ -9,6 +9,7 @@ import { logger } from "./logger";
 import { toHumanReadableName } from "./nameGenerator";
 import { Components } from "libp2p/dist/src/components";
 import type { PeerDiscovery } from "@libp2p/interface-peer-discovery";
+import { p2pShareProvider } from "../sessionData";
 
 export const createNode = async (bootstrapAddresses: string[]) => {
   let peerDiscovery = [
@@ -42,6 +43,8 @@ export const createNode = async (bootstrapAddresses: string[]) => {
   });
 
   await node.start();
+  p2pShareProvider.addItem(toHumanReadableName(node.peerId.toString()));
+  p2pShareProvider.refresh();
   return node;
 };
 
