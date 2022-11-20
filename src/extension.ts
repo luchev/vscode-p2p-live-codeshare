@@ -4,14 +4,15 @@ import {registerSetupSubscriber} from './setupSubscriber';
 import {initLogger} from './shared/logger';
 import { p2pShareProvider } from './sessionData';
 
+import { registerFilePublisher } from './filePublisher';
 
-
-export function activate(ctx: vscode.ExtensionContext) {
+export async function activate(ctx: vscode.ExtensionContext) {
 	initLogger(ctx);
 	registerSetupPublisher(ctx);
 	registerSetupSubscriber(ctx);
 	
 	vscode.window.registerTreeDataProvider('session', p2pShareProvider);
+	registerFilePublisher(ctx);
 }
 
-export function deactivate() { }
+export function deactivate() {}

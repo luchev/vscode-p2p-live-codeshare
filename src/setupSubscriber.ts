@@ -1,31 +1,44 @@
 import * as vscode from "vscode";
-import { createNode } from "./shared/createNode";
 import { Topics } from "./shared/constants";
 import { logger } from "./shared/logger";
 import { toHumanReadableName } from "./shared/nameGenerator";
 import { handleWorkspaceEvent } from "./shared/actions/workspace";
 import { handlePeerDiscovery } from "./shared/actions/peer-discovery";
 import { Libp2p } from "libp2p";
-import { p2pShareProvider } from './sessionData';
+
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
+import { addCommonListeners, createNode } from './shared/createNode';
+import { multiaddr } from '@multiformats/multiaddr';
+import { Message } from '@libp2p/interface-pubsub';
+import { peer2 } from './shared/peers';
+import { createFromProtobuf } from '@libp2p/peer-id-factory';
 
 let subscriberName = "";
 let peer: Libp2p | undefined = undefined;
 
-async function setupSubscriber(ctx: vscode.ExtensionContext) {
-  if (peer !== undefined) {
-    logger().info("Subscriber already running");
-    return;
-  }
+export async function setupSubscriber(ctx: vscode.ExtensionContext) {
+	const peerid = await createFromProtobuf(uint8ArrayFromString(peer2, "base64"));
+	const topic = Topics.workspaceUpdates;
+	const node1 = await Promise.resolve(createNode(peerid, 9000));
 
-  const inputAddress = await vscode.window.showInputBox({
-    placeHolder: "Relay",
-    prompt: "Type in the Relay address",
-  });
+	node1.pubsub.addEventListener("message", (evt) => {
+		console.log('evt.detail', evt.detail as Message);
+		logger().info(`node1 received: ${uint8ArrayToString(evt.detail.data)} on topic ${evt.detail.topic}`);
+		vscode.window.showInformationMessage(`node1 received: ${uint8ArrayToString(evt.detail.data)} on topic ${evt.detail.topic}`);
+	});
+	node1.pubsub.subscribe(topic);
 
-  if (inputAddress === undefined || inputAddress === "") {
-    logger().warn("Invalid relay address provided to the subscriber");
+	addCommonListeners(ctx, node1);
+
+	const inputAddress = await vscode.window.showInputBox({
+		placeHolder: "Multiaddress",
+		prompt: "Type in the host Multiaddress",
+	});
+	if (inputAddress === undefined || inputAddress === '') {
+		vscode.window.showErrorMessage('An Address is mandatory');
     return;
-  }
+	}
 
   await createNode([inputAddress.trim()])
     .then((node) => {
@@ -49,6 +62,8 @@ async function setupSubscriber(ctx: vscode.ExtensionContext) {
   subscriber.pubsub.addEventListener("message", (event) => {
     handleWorkspaceEvent(event);
   });
+
+	subscribeNode = node1;
 }
 
 export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {
@@ -58,3 +73,5 @@ export function registerSetupSubscriber(ctx: vscode.ExtensionContext) {
     )
   );
 }
+
+export let subscribeNode: Libp2p;
