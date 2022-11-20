@@ -1,4 +1,3 @@
-import { constants } from "buffer";
 import { Libp2p } from "libp2p";
 import { TextDocumentChangeEvent } from "vscode";
 import { skipFileNames, Topics } from "../../constants";
