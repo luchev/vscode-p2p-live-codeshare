@@ -1,6 +1,6 @@
 # README
 
-This is the README for your extension "p2p-share". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "colab". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 

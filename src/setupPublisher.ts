@@ -1,49 +1,31 @@
 import * as vscode from "vscode";
-import { logger } from "./shared/logger";
-import { handlePeerDiscovery } from "./shared/actions/peer-discovery";
 import { Libp2p } from "libp2p";
-import {
-  onFileOrDirectoryCreated,
-  onFileOrDirectoryDeleted,
-} from "./shared/listeners/workspace";
-import { onFileChanged } from "./shared/listeners/workspace/file-changed";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { addCommonListeners, createNode } from "./shared/createNode";
 import { createFromProtobuf } from "@libp2p/peer-id-factory";
 import { peer1 } from "./shared/peers";
-import { isPeerSetup, peer, peerName, setPeer } from "./shared/state/peer";
+import { peer } from "./shared/state/peer";
+import { toast } from "./shared/toast";
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
-  if (isPeerSetup()) {
+  if (peer().isPeerSetup()) {
     return;
   }
+
   const peerid = await createFromProtobuf(
     uint8ArrayFromString(peer1, "base64")
   );
 
-  setPeer(await Promise.resolve(createNode({ peerId: peerid, port: 8000 })));
-
-
-  peer().addEventListener("peer:discovery", (event) =>
-    handlePeerDiscovery(event, peerName())
-  );
-
-  vscode.workspace.onDidCreateFiles((event) =>
-    onFileOrDirectoryCreated(peer(), event)
-  );
-  vscode.workspace.onDidDeleteFiles((event) =>
-    onFileOrDirectoryDeleted(peer(), event)
-  );
-  vscode.workspace.onDidChangeTextDocument((event) =>
-    onFileChanged(peer(), event)
-  );
-
-  addCommonListeners(ctx, peer());
+  peer()
+    .recover(peerid, 8000)
+    .then((peer) => peer.initPublisher(ctx))
+    .catch((err) => {
+      toast(err);
+    });
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(
-    vscode.commands.registerCommand("p2p-share.setupPublisher", async () =>
+    vscode.commands.registerCommand("colab.setupPublisher", async () =>
       setupPublisher(ctx)
     )
   );

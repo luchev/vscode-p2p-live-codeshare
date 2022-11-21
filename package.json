@@ -1,6 +1,6 @@
 {
-  "name": "p2p-share",
-  "displayName": "p2p-share",
+  "name": "colab",
+  "displayName": "colab",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -10,38 +10,43 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:p2p-share.setupSubscriber",
-    "onCommand:p2p-share.setupPublisher",
-    "onView:p2p-share",
-    "onCommand:p2p-share.sendProjectFiles"
+    "onCommand:colab.setupSubscriber",
+    "onCommand:colab.setupPublisher",
+    "onView:colab",
+    "onCommand:colab.sendProjectFiles",
+    "onCommand:colab.disconnect"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "p2p-share.setupSubscriber",
-        "title": "zp2p: Setup Subscriber"
+        "command": "colab.setupSubscriber",
+        "title": "Colab: Setup Subscriber"
       },
       {
-        "command": "p2p-share.setupPublisher",
-        "title": "zp2p: Setup Publisher"
+        "command": "colab.setupPublisher",
+        "title": "Colab: Setup Publisher"
       },
       {
-        "command": "p2p-share.sendProjectFiles",
-        "title": "zp2p: Send project files to Docker-able machine"
+        "command": "colab.disconnect",
+        "title": "Colab: Disconnect from network"
+      },
+      {
+        "command": "colab.sendProjectFiles",
+        "title": "Colab: Send project files to Docker-able machine"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "p2p-share",
+          "id": "colab",
           "title": "Peer to Peer Share",
           "icon": "resources/folder.png"
         }
       ]
     },
     "views": {
-      "p2p-share": [
+      "colab": [
         {
           "id": "welcome",
           "name": "Welcome"
@@ -55,7 +60,7 @@
     "viewsWelcome": [
       {
         "view": "welcome",
-        "contents": "Start a subscriber node.\n[Setup Subscriber](command:p2p-share.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:p2p-share.setupPublisher)",
+        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)",
         "when": "isLinux||isWindows"
       },
       {

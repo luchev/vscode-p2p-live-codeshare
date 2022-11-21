@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import AdmZip from 'adm-zip';
-import { TextEncoder } from 'util';
 import { CommandMessage, DockerFilesMessage } from './models/DockerFilesMessage';
 import { logger } from './shared/logger';
 import { pipe } from 'it-pipe';
@@ -36,7 +35,7 @@ async function publishFiles(context: vscode.ExtensionContext) {
 
 		let jsonMsg = JSON.stringify(message);
 
-		let selfNode = peer();
+		let selfNode = await peer().p2p();
 
 		// if(!selfNode) {await setupSubscriber(context);}
 
@@ -126,5 +125,5 @@ async function publishFiles(context: vscode.ExtensionContext) {
 }
 
 export function registerFilePublisher(context: vscode.ExtensionContext) {
-	context.subscriptions.push(vscode.commands.registerCommand('p2p-share.sendProjectFiles', async () => await publishFiles(context)));
+	context.subscriptions.push(vscode.commands.registerCommand('colab.sendProjectFiles', async () => await publishFiles(context)));
 }
