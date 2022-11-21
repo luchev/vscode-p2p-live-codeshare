@@ -10,14 +10,15 @@ import { toHumanReadableName } from "./nameGenerator";
 import { Components } from "libp2p/dist/src/components";
 import type { PeerDiscovery } from "@libp2p/interface-peer-discovery";
 import { p2pShareProvider } from "../sessionData";
-import * as vscode from 'vscode';
-import { Connection } from '@libp2p/interface-connection';
-import { PeerInfo } from '@libp2p/interface-peer-info';
-import { pipe } from 'it-pipe';
+import * as vscode from "vscode";
+import { Connection } from "@libp2p/interface-connection";
+import { PeerInfo } from "@libp2p/interface-peer-info";
+import { pipe } from "it-pipe";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { handleReceivedDockerContent } from './dockerfiles-receiver';
-import emitter from './events';
+import { handleReceivedDockerContent } from "./dockerfiles-receiver";
+import emitter from "./events";
+import type { PeerId } from "@libp2p/interface-peer-id";
 
 // export const createNode = async (bootstrapAddresses: string[]) => {
 //   let peerDiscovery = [
@@ -33,57 +34,17 @@ import emitter from './events';
 //     );
 //   }
 
-export const createNode = async (peerId?: any, port?: number) => {
-    const node = await createLibp2p({
-        peerId: peerId,
-        addresses: {
-            listen: [`/ip4/0.0.0.0/tcp/${port ? port : 0}`]
-        },
-        transports: [tcp()],
-        streamMuxers: [mplex()],
-        connectionEncryption: [noise()],
-        pubsub: gossipsub({ allowPublishToZeroPeers: true }),
-    });
-    await node.start();
-    return node;
-};
+export const createNode = async (props: {
+  peerId?: PeerId;
+  port?: number;
+  bootstrapAddresses?: string[];
+}) => {
+  const { peerId, port, bootstrapAddresses } = props;
 
   const node = await createLibp2p({
+    peerId: peerId,
     addresses: {
-      listen: ["/ip4/0.0.0.0/tcp/0"],
-    },
-    transports: [tcp()],
-    streamMuxers: [mplex()],
-    connectionEncryption: [noise()],
-    pubsub: gossipsub({ allowPublishToZeroPeers: true }),
-    peerDiscovery: peerDiscovery,
-    relay: {
-      advertise: { enabled: true },
-      autoRelay: { enabled: true },
-      enabled: true,
-      hop: { enabled: true },
-    },
-  });
-
-  await node.start();
-  p2pShareProvider.addItem(toHumanReadableName(node.peerId.toString()));
-  p2pShareProvider.refresh();
-  return node;
-};
-
-let _relay: Libp2p;
-
-// startRelay creates a 3rd node, for local testing
-// So the subscriber and the peer can connect through it
-// This allows testing of the auto discovery mechanism
-async function startRelay() {
-  if (_relay) {
-    return _relay.getMultiaddrs().map((x) => x.toString());
-  }
-
-  _relay = await createLibp2p({
-    addresses: {
-      listen: ["/ip4/0.0.0.0/tcp/0"],
+      listen: [`/ip4/0.0.0.0/tcp/${port ?? 0}`],
     },
     transports: [tcp()],
     streamMuxers: [mplex()],
@@ -91,85 +52,94 @@ async function startRelay() {
     pubsub: gossipsub({ allowPublishToZeroPeers: true }),
     peerDiscovery: [
       pubsubPeerDiscovery({
-        interval: 100,
+        interval: 100, // 100ms
       }) as (components: Components) => PeerDiscovery,
+      ...(bootstrapAddresses !== undefined
+        ? [bootstrap({ list: bootstrapAddresses })]
+        : []),
     ],
     relay: {
-      advertise: {
-        enabled: true,
-      },
-      autoRelay: {
-        enabled: true,
-      },
-      enabled: true, // Allows you to dial and accept relayed connections. Does not make you a relay.
-      hop: {
-        enabled: true, // Allows you to be a relay for other peers
-      },
+      advertise: { enabled: true },
+      autoRelay: { enabled: true },
+      enabled: true,
+      hop: { enabled: true },
     },
   });
+  await node.start();
+  // p2pShareProvider.addItem(toHumanReadableName(node.peerId.toString()));
+  // p2pShareProvider.refresh();
+  logger().info("Peer started", {
+    // id: peerName(),
+    addresses: node
+      .getMultiaddrs()
+      .map((x) => x.toString()),
+  });
+  return node;
+};
 
-  await _relay.start();
+export async function addCommonListeners(
+  ctx: vscode.ExtensionContext,
+  node: Libp2p
+) {
+  var em = emitter;
+  const answer = await vscode.window.showInformationMessage(
+    "Do you have Docker installed & running?",
+    "Yes",
+    "No"
+  );
+  node.connectionManager.addEventListener("peer:connect", async (evt) => {
+    const connection = evt.detail as Connection;
+    logger().info(
+      `${node.peerId}: Connected to ${connection.remotePeer.toString()}`
+    ); // Log connected peer
 
-  logger().info("Relay started", {
-    addresses: _relay.getMultiaddrs().map((x) => x.toString()),
-    id: toHumanReadableName(_relay.peerId.toString()),
+    // Contact connected peer, to let them know, that i am dockerable.
+    if (answer === "Yes") {
+      let stream = await connection.newStream("/docker");
+      stream.reset();
+    }
   });
 
-  return _relay.getMultiaddrs().map((x) => x.toString());
-}
+  node.handle("/docker", ({ stream, connection }) => {
+    logger().info(
+      `${node.peerId}: Peer ${connection.remotePeer.toString()} is Dockerable`
+    ); // Log discovered peer
+    node.peerStore
+      .tagPeer(connection.remotePeer, "dockerable")
+      .then((value) => {
+        console.log(value);
+      })
+      .catch((reason) => {
+        console.log(reason);
+      })
+      .finally(() => null);
+  });
 
-export async function addCommonListeners(ctx: vscode.ExtensionContext, node: Libp2p) {
-    var em = emitter;
-    const answer = await vscode.window.showInformationMessage("Do you have Docker installed & running?", "Yes", "No");
-    node.connectionManager.addEventListener("peer:connect", async (evt) => {
-        const connection = evt.detail as Connection;
-        logger().info(`${node.peerId}: Connected to ${connection.remotePeer.toString()}`); // Log connected peer
-
-        // Contact connected peer, to let them know, that i am dockerable.
-        if (answer === 'Yes') {
-            let stream = await connection.newStream('/docker');
-            stream.reset();
+  node.handle("/zip", async ({ stream, connection }) => {
+    logger().info(`${node.peerId}: Zip files from ${connection.remotePeer}`);
+    setInterval(() => {
+      node.ping(connection.remotePeer);
+    }, 5000);
+    pipe(
+      stream,
+      (source) => {
+        return (async function* () {
+          for await (const buf of source) {
+            yield uint8ArrayToString(buf.subarray());
+          }
+        })();
+      },
+      async (source) => {
+        for await (const msg of source) {
+          console.log(msg);
+          if (msg.includes('{"command":')) {
+            em.emit("CommandEvent", JSON.parse(msg));
+            continue;
+          } else {
+            handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
+          }
         }
-    });
-
-    node.addEventListener("peer:discovery", async (evt) => {
-        let peerInfo = evt.detail as PeerInfo;
-        logger().info(`${node.peerId}: Discovered to ${peerInfo.id.toString()}`); // Log discovered peer
-        //console.log('protocols', peerInfo.protocols.join("\n"));
-    });
-
-    node.handle('/docker', ({ stream, connection }) => {
-        logger().info(`${node.peerId}: Peer ${connection.remotePeer.toString()} is Dockerable`); // Log discovered peer
-        node.peerStore.tagPeer(connection.remotePeer, "dockerable").then((value) => {
-            console.log(value);
-        }).catch((reason) => {
-            console.log(reason);
-        }).finally(() => null);
-    });
-
-    node.handle('/zip', async ({ stream, connection }) => {
-        logger().info(`${node.peerId}: Zip files from ${connection.remotePeer}`);
-        setInterval(() => {
-            node.ping(connection.remotePeer);
-        }, 5000);
-        pipe(
-            stream,
-            (source) => {
-				return (async function* () {
-					for await (const buf of source) { yield uint8ArrayToString(buf.subarray()); }
-				})();
-			},
-			async (source) => {
-				for await (const msg of source) {
-                    console.log(msg);
-                    if (msg.includes('{"command":')) {
-                        em.emit('CommandEvent', JSON.parse(msg));
-                        continue;
-                    } else{
-                        handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
-                    }
-				}
-			}
-        );
-    });
+      }
+    );
+  });
 }

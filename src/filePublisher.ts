@@ -3,12 +3,12 @@ import AdmZip from 'adm-zip';
 import { TextEncoder } from 'util';
 import { CommandMessage, DockerFilesMessage } from './models/DockerFilesMessage';
 import { logger } from './shared/logger';
-import { subscribeNode } from './setupSubscriber';
 import { pipe } from 'it-pipe';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { randomInt } from 'crypto';
 import { pushable, Pushable } from 'it-pushable';
+import {peer} from './shared/state/peer';
 
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
@@ -32,14 +32,11 @@ async function publishFiles(context: vscode.ExtensionContext) {
 		let zipName = ws.name;
 		let zipBuffer = zip.toBuffer();
 
-
 		let message = new DockerFilesMessage(userId, zipName, zipBuffer);
 
 		let jsonMsg = JSON.stringify(message);
 
-		let uint8Array = new TextEncoder().encode(jsonMsg);
-
-		let selfNode = subscribeNode;
+		let selfNode = peer();
 
 		// if(!selfNode) {await setupSubscriber(context);}
 
@@ -52,9 +49,9 @@ async function publishFiles(context: vscode.ExtensionContext) {
 				return false;
 			}
 		});
-		let peer = dockerablePeers[randomInt(dockerablePeers.length)];
+		let peer2 = dockerablePeers[randomInt(dockerablePeers.length)];
 
-		let stream = await selfNode.dialProtocol(peer.id, '/zip', );
+		let stream = await selfNode.dialProtocol(peer2.id, '/zip', );
 
 		const writeEmitter = new vscode.EventEmitter<string>();
 		let command = '';

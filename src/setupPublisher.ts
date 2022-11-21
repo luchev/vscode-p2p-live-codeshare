@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { logger } from "./shared/logger";
-import { toHumanReadableName } from "./shared/nameGenerator";
 import { handlePeerDiscovery } from "./shared/actions/peer-discovery";
 import { Libp2p } from "libp2p";
 import {
@@ -8,56 +7,38 @@ import {
   onFileOrDirectoryDeleted,
 } from "./shared/listeners/workspace";
 import { onFileChanged } from "./shared/listeners/workspace/file-changed";
-import { p2pShareProvider } from './sessionData';
-
-let publisherName = "";
-let peer: Libp2p | undefined = undefined;
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { addCommonListeners, createNode } from './shared/createNode';
-import { createFromProtobuf } from '@libp2p/peer-id-factory';
-import { peer1 } from './shared/peers';
+import { addCommonListeners, createNode } from "./shared/createNode";
+import { createFromProtobuf } from "@libp2p/peer-id-factory";
+import { peer1 } from "./shared/peers";
+import { isPeerSetup, peer, peerName, setPeer } from "./shared/state/peer";
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
-  if (peer !== undefined) {
+  if (isPeerSetup()) {
     return;
   }
-	const peerid = await createFromProtobuf(uint8ArrayFromString(peer1, "base64"));
-	const node2 = await Promise.resolve(createNode(peerid, 8000));
-	vscode.window.showInformationMessage('started publisher: ' + node2.getMultiaddrs().join("\n")); // 1 is the non-localhost one
+  const peerid = await createFromProtobuf(
+    uint8ArrayFromString(peer1, "base64")
+  );
 
-  await createNode([])
-    .then((node) => {
-      peer = node;
-      publisherName = toHumanReadableName(peer.peerId.toString());
-      logger().info("Publisher started", {
-        id: publisherName,
-        addresses: peer.getMultiaddrs().map((x) => x.toString()),
-      });
-    })
-    .catch(() => {
-      logger().warn("Publisher failed to start");
-    });
+  setPeer(await Promise.resolve(createNode({ peerId: peerid, port: 8000 })));
 
-  const publisher = peer!;
 
-  publisher.addEventListener("peer:discovery", (event) =>
-    handlePeerDiscovery(event, publisherName)
+  peer().addEventListener("peer:discovery", (event) =>
+    handlePeerDiscovery(event, peerName())
   );
 
   vscode.workspace.onDidCreateFiles((event) =>
-    onFileOrDirectoryCreated(publisher, event)
+    onFileOrDirectoryCreated(peer(), event)
   );
   vscode.workspace.onDidDeleteFiles((event) =>
-    onFileOrDirectoryDeleted(publisher, event)
+    onFileOrDirectoryDeleted(peer(), event)
   );
   vscode.workspace.onDidChangeTextDocument((event) =>
-    onFileChanged(publisher, event)
+    onFileChanged(peer(), event)
   );
 
-	addCommonListeners(ctx, node2);
-
-	publishNode = node2;
-
+  addCommonListeners(ctx, peer());
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {
