@@ -10,6 +10,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { CommandMessage } from '../models/DockerFilesMessage';
 import emitter from './events';
+import * as glob from 'glob';
 
 export class Docker {
     private static consoleOutput: Pushable<string> = pushable<string>({ objectMode: true });
@@ -21,7 +22,9 @@ export class Docker {
 
         // Glob pattern to search for dockerfiles, under the workspace folder
         let dockerFilePattern = new vscode.RelativePattern(folderPath, '**/Dockerfile*');
-        const dockerfiles = await vscode.workspace.findFiles(dockerFilePattern, null, 50);
+        let dockerfiles = glob.sync('**/Dockerfile*', {cwd: folderPath});
+        // const dockerfiles = mg.found;
+        // const dockerfiles = await vscode.workspace.findFiles(dockerFilePattern, null, 50);
 
         if (dockerfiles.length === 0) {
             let errorMsg = 'Could not find any dockerfiles :(';
@@ -37,7 +40,7 @@ export class Docker {
 
         // Find where Dockerfile is relative to Workspace folder.
         // let relative = vscode.workspace.asRelativePath(dockerfileUri.path);
-        let relative = path.relative(context.extensionUri.path, dockerfileUri.path);
+        let relative = path.relative(context.extensionUri.fsPath, folderPath + "\\" + dockerfileUri);
 
         // Remove /Dockerfile from that path
         const relativeFolderPath = relative.substring(0, relative.indexOf("\\Dockerfile")).toLowerCase().replaceAll('\\', '/');
