@@ -85,7 +85,7 @@ export class Peer {
 
     addCommonListeners(ctx, this.peer);
 
-    return Promise.resolve(this)
+    return Promise.resolve(this);
   }
 
   initSubscriber(ctx: ExtensionContext) {
@@ -104,7 +104,7 @@ export class Peer {
       handleWorkspaceEvent(event);
     });
 
-    return Promise.resolve(this)
+    return Promise.resolve(this);
   }
 
 

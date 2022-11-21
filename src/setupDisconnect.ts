@@ -4,10 +4,10 @@ import {toast} from "./shared/toast";
 
 async function disconnect(ctx: vscode.ExtensionContext) {
   if (!peer().isPeerSetup()) {
-    toast(`You're not connected to anyone`)
+    toast(`You're not connected to anyone`);
   } else {
     await peer().kill();
-    toast(`You've been disconnected from the network`)
+    toast(`You've been disconnected from the network`);
   }
 }
 
