@@ -48,6 +48,7 @@ export class Peer {
     }
     this.peer = await createNode({});
     this.isInitialized = true;
+    return this;
   }
 
   async recover(peerId: PeerId, port: number, bootstrapAddresses?: string[]) {

@@ -22,8 +22,12 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
       
     },
     () => {
-      // init peer with default parameter
-      logger().info("not implemented yet");
+      peer()
+      .new()
+      .then((peer) => peer.initPublisher(ctx))
+      .catch((err) => {
+        toast(err);
+      });
     }
   );
 
