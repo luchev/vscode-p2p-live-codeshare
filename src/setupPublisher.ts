@@ -27,7 +27,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
     }
   );
 
-  writeSettingsFile(ctx, peer().peer?.peerId.toString()!, peer().peerName(), peer().port!);
+  //writeSettingsFile(ctx, peer().settingsFile, peerSettings.peerId, peerSettings.port!);
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {

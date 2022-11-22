@@ -38,9 +38,6 @@ export const createNode = async (props: {
 }) => {
   const { peerId, port, bootstrapAddresses } = props;
 
-  logger().info(peerId!.toString());
-  logger().info(port!.toString());
-
   const node = await createLibp2p({
     peerId: peerId,
     addresses: {
@@ -65,7 +62,12 @@ export const createNode = async (props: {
       hop: { enabled: true },
     },
   });
-  await node.start();
+  await node.start()!.then(
+    undefined,
+    (error) => {
+      console.log(error);
+    }
+  );
   // p2pShareProvider.addItem(toHumanReadableName(node.peerId.toString()));
   // p2pShareProvider.refresh();
   logger().info("Peer started", {
