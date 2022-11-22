@@ -17,4 +17,6 @@ export async function activate(ctx: vscode.ExtensionContext) {
 	registerFilePublisher(ctx);
 }
 
-export function deactivate() {}
+export function deactivate() { 
+	// Part of VSCode Extension API
+ }

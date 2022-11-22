@@ -6,9 +6,10 @@ class PeerNodeProvider implements vscode.TreeDataProvider<Peer> {
 	private _onDidChangeTreeData: vscode.EventEmitter<Peer | undefined | void> = new vscode.EventEmitter<Peer | undefined | void>();
 	readonly onDidChangeTreeData: vscode.Event<Peer | undefined | void> = this._onDidChangeTreeData.event;
 
-    private peers : Peer [] = [];
+    private peers : Peer [];
 
 	constructor() {
+		this.peers = [];
 	}
 
 	refresh(): void {
@@ -25,7 +26,7 @@ class PeerNodeProvider implements vscode.TreeDataProvider<Peer> {
 	}
 
 	getTreeItem(element: Peer): vscode.TreeItem {
-        const item = new vscode.TreeItem(element.label!, element.collapsibleState);
+        const item = new vscode.TreeItem(element.label, element.collapsibleState);
 		return item;
 	}
 

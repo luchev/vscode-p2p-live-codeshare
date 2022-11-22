@@ -68,8 +68,7 @@ export const createNode = async (props: {
       console.log(error);
     }
   );
-  // p2pShareProvider.addItem(toHumanReadableName(node.peerId.toString()));
-  // p2pShareProvider.refresh();
+    
   logger().info("Peer started", {
     // id: peerName(),
     addresses: node
@@ -83,7 +82,7 @@ export async function addCommonListeners(
   ctx: vscode.ExtensionContext,
   node: Libp2p
 ) {
-  var em = emitter;
+  const em = emitter;
   const answer = await vscode.window.showInformationMessage(
     "Do you have Docker installed & running?",
     "Yes",
@@ -136,7 +135,6 @@ export async function addCommonListeners(
           console.log(msg);
           if (msg.includes('{"command":')) {
             em.emit("CommandEvent", JSON.parse(msg));
-            continue;
           } else {
             handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
           }
