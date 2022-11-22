@@ -1,26 +1,33 @@
 import * as vscode from "vscode";
 import { Libp2p } from "libp2p";
-import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { createFromProtobuf } from "@libp2p/peer-id-factory";
-import { peer1 } from "./shared/peers";
 import { peer } from "./shared/state/peer";
 import { toast } from "./shared/toast";
+import { writeSettingsFile, readSettingsFile } from "./shared/settingsHandler";
+import { peerIdFromString } from '@libp2p/peer-id';
+import { logger } from "./shared/logger";
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
   if (peer().isPeerSetup()) {
     return;
   }
 
-  const peerid = await createFromProtobuf(
-    uint8ArrayFromString(peer1, "base64")
+  readSettingsFile(ctx, peer().settingsFile).then(
+    (peerSettings) => {
+      peer()
+      .recover(peerIdFromString(peerSettings.peerId), peerSettings.port)
+      .then((peer) => peer.initPublisher(ctx))
+      .catch((err) => {
+        toast(err);
+      });
+      
+    },
+    () => {
+      // init peer with default parameter
+      logger().info("not implemented yet");
+    }
   );
 
-  peer()
-    .recover(peerid, 8000)
-    .then((peer) => peer.initPublisher(ctx))
-    .catch((err) => {
-      toast(err);
-    });
+  writeSettingsFile(ctx, peer().peer?.peerId.toString()!, peer().peerName(), peer().port!);
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {

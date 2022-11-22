@@ -6,13 +6,10 @@ import { noise } from "@chainsafe/libp2p-noise";
 import { bootstrap } from "@libp2p/bootstrap";
 import { pubsubPeerDiscovery } from "@libp2p/pubsub-peer-discovery";
 import { logger } from "./logger";
-import { toHumanReadableName } from "./nameGenerator";
 import { Components } from "libp2p/dist/src/components";
 import type { PeerDiscovery } from "@libp2p/interface-peer-discovery";
-import { p2pShareProvider } from "../sessionData";
 import * as vscode from "vscode";
 import { Connection } from "@libp2p/interface-connection";
-import { PeerInfo } from "@libp2p/interface-peer-info";
 import { pipe } from "it-pipe";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
@@ -40,6 +37,9 @@ export const createNode = async (props: {
   bootstrapAddresses?: string[];
 }) => {
   const { peerId, port, bootstrapAddresses } = props;
+
+  logger().info(peerId!.toString());
+  logger().info(port!.toString());
 
   const node = await createLibp2p({
     peerId: peerId,
