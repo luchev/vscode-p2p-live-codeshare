@@ -16,6 +16,8 @@ export class Peer {
   peer?: Libp2p;
   name?: string;
   isInitialized?: boolean;
+  port?: number;
+  settingsFile = 'peer_settings.json';
 
   constructor() {
     this.isInitialized = false;
@@ -57,6 +59,7 @@ export class Peer {
       .then((peer) => {
         this.peer = peer;
         this.isInitialized = true;
+        this.port = port;
         return Promise.resolve(this);
       })
       .catch((err) => {
@@ -90,7 +93,7 @@ export class Peer {
 
   initSubscriber(ctx: ExtensionContext) {
     if (!this.peer) {
-      return Promise.reject("Cannot init publisher before peer is started");
+      return Promise.reject("Cannot init subscriber before peer is started");
     }
 
     addCommonListeners(ctx, this.peer);
