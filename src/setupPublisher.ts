@@ -3,7 +3,6 @@ import { Libp2p } from "libp2p";
 import { peer } from "./shared/state/peer";
 import { toast } from "./shared/toast";
 import { writeSettingsFile, readSettingsFile } from "./shared/settingsHandler";
-import { peerIdFromString, peerIdFromPeerId} from '@libp2p/peer-id';
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
   if (peer().isPeerSetup()) {
@@ -30,7 +29,7 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
     }
   ).then(
     () => {
-      writeSettingsFile(ctx, peer().settingsFile, peer().peer!.peerId.toString(), peer().port!);
+      writeSettingsFile(ctx, peer().settingsFile, peer().peer!.peerId, peer().port!);
     }
   );
 }
