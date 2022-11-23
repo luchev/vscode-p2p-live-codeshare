@@ -1,5 +1,7 @@
 import type { PeerId } from "@libp2p/interface-peer-id";
+import { existsSync, lstatSync, rmSync } from "fs";
 import { Libp2p } from "libp2p";
+import path from "path";
 import { ExtensionContext, workspace } from "vscode";
 import { handlePeerDiscovery } from "../actions/peer-discovery";
 import {handleWorkspaceEvent} from "../actions/workspace";
@@ -116,5 +118,14 @@ export class Peer {
     }
     await this.peer?.stop();
     this.isInitialized = false;
+  }
+
+  deletePeerSettingsFile(ctx: ExtensionContext) {
+    const settingsPath = path.join(ctx.extensionPath, this.settingsFile);
+    if (existsSync(settingsPath)) {
+      if (lstatSync(settingsPath).isFile()) {
+        rmSync(settingsPath);
+      }
+    }
   }
 }

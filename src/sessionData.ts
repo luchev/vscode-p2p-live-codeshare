@@ -37,6 +37,10 @@ class PeerNodeProvider implements vscode.TreeDataProvider<Peer> {
     addItem(peerId:string) {
         this.peers.push(new Peer(peerId));
     }
+
+	reset() {
+		this.peers = [];
+	}
 }
 
 class Peer extends vscode.TreeItem {
