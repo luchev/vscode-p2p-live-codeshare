@@ -3,6 +3,7 @@ import { Libp2p } from "libp2p";
 import { peer } from "./shared/state/peer";
 import { toast } from "./shared/toast";
 import { writeSettingsFile, readSettingsFile } from "./shared/settingsHandler";
+import { logger } from "./shared/logger";
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
   if (peer().isPeerSetup()) {
@@ -11,25 +12,31 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
 
   await readSettingsFile(ctx, peer().settingsFile).then(
     (peerSettings) => {
+      logger().info("Reconnecting old publisher.");
       peer()
       .recover(peerSettings.peerId, peerSettings.port)
       .then((peer) => peer.initPublisher(ctx))
       .catch((err) => {
         toast(err);
       });
-      
     },
     () => {
+      logger().info("Starting new publisher");
       peer()
       .new()
       .then((peer) => peer.initPublisher(ctx))
       .catch((err) => {
         toast(err);
-      });
-    }
-  ).then(
-    () => {
-      writeSettingsFile(ctx, peer().settingsFile, peer().peer!.peerId, peer().port!);
+      }).then(
+        () => {
+          peer().p2p().then(
+            (p2p) => {
+              const port = p2p.getMultiaddrs()[0].nodeAddress().port;
+              const peerId = peer().peer!.peerId;
+              writeSettingsFile(ctx, peer().settingsFile, peerId, port); 
+          });
+        }
+      );
     }
   );
 }

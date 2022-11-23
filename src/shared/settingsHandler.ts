@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createFromProtobuf , exportToProtobuf} from "@libp2p/peer-id-factory";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
+import { toString as stringFromUint8Array} from "uint8arrays/to-string";
 import type { PeerId } from '@libp2p/interface-peer-id';
 
 export async function readSettingsFile(ctx: vscode.ExtensionContext, file:string) {
@@ -18,7 +19,7 @@ export async function readSettingsFile(ctx: vscode.ExtensionContext, file:string
 }
 
 export function writeSettingsFile(ctx: vscode.ExtensionContext, filename:string, peerId:PeerId, port:number) {
-    const settings = {peerId: exportToProtobuf(peerId).toString(), port: port};
+    const settings = {peerId: stringFromUint8Array(exportToProtobuf(peerId), "base64"), port: port};
     const json = JSON.stringify(settings);
     fs.writeFileSync(path.join(ctx.extensionPath, filename), json, 'utf8');
 }
