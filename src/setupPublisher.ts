@@ -31,9 +31,14 @@ async function setupPublisher(ctx: vscode.ExtensionContext) {
         () => {
           peer().p2p().then(
             (p2p) => {
-              const port = p2p.getMultiaddrs()[0].nodeAddress().port;
-              const peerId = peer().peer!.peerId;
-              writeSettingsFile(ctx, peer().settingsFile, peerId, port); 
+              const multiAddrs = p2p.getMultiaddrs();
+              if (multiAddrs.length === 0) {
+                logger().error("Peer node has no multiaddrs.");
+              } else {
+                const port = multiAddrs[0].nodeAddress().port;
+                const peerId = peer().peer!.peerId;
+                writeSettingsFile(ctx, peer().settingsFile, peerId, port); 
+              }
           });
         }
       );

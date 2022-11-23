@@ -16,7 +16,6 @@ export class Peer {
   peer?: Libp2p;
   name?: string;
   isInitialized?: boolean;
-  port?: number;
   settingsFile = 'peer_settings.json';
 
   constructor() {
@@ -60,7 +59,6 @@ export class Peer {
       .then((peer) => {
         this.peer = peer;
         this.isInitialized = true;
-        this.port = port;
         return Promise.resolve(this);
       })
       .catch((err) => {
