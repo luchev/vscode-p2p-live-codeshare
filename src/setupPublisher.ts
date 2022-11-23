@@ -1,26 +1,49 @@
 import * as vscode from "vscode";
 import { Libp2p } from "libp2p";
-import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { createFromProtobuf } from "@libp2p/peer-id-factory";
-import { peer1 } from "./shared/peers";
 import { peer } from "./shared/state/peer";
 import { toast } from "./shared/toast";
+import { writeSettingsFile, readSettingsFile } from "./shared/settingsHandler";
+import { logger } from "./shared/logger";
 
 async function setupPublisher(ctx: vscode.ExtensionContext) {
   if (peer().isPeerSetup()) {
     return;
   }
 
-  const peerid = await createFromProtobuf(
-    uint8ArrayFromString(peer1, "base64")
+  await readSettingsFile(ctx, peer().settingsFile).then(
+    (peerSettings) => {
+      logger().info("Reconnecting old publisher.");
+      peer()
+      .recover(peerSettings.peerId, peerSettings.port)
+      .then((peer) => peer.initPublisher(ctx))
+      .catch((err) => {
+        toast(err);
+      });
+    },
+    () => {
+      logger().info("Starting new publisher");
+      peer()
+      .new()
+      .then((peer) => peer.initPublisher(ctx))
+      .catch((err) => {
+        toast(err);
+      }).then(
+        () => {
+          peer().p2p().then(
+            (p2p) => {
+              const multiAddrs = p2p.getMultiaddrs();
+              if (multiAddrs.length === 0) {
+                logger().error("Peer node has no multiaddrs.");
+              } else {
+                const port = multiAddrs[0].nodeAddress().port;
+                const peerId = peer().peer!.peerId;
+                writeSettingsFile(ctx, peer().settingsFile, peerId, port); 
+              }
+          });
+        }
+      );
+    }
   );
-
-  peer()
-    .recover(peerid, 8000)
-    .then((peer) => peer.initPublisher(ctx))
-    .catch((err) => {
-      toast(err);
-    });
 }
 
 export function registerSetupPublisher(ctx: vscode.ExtensionContext) {

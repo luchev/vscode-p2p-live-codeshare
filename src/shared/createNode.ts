@@ -6,13 +6,10 @@ import { noise } from "@chainsafe/libp2p-noise";
 import { bootstrap } from "@libp2p/bootstrap";
 import { pubsubPeerDiscovery } from "@libp2p/pubsub-peer-discovery";
 import { logger } from "./logger";
-import { toHumanReadableName } from "./nameGenerator";
 import { Components } from "libp2p/dist/src/components";
 import type { PeerDiscovery } from "@libp2p/interface-peer-discovery";
-import { p2pShareProvider } from "../sessionData";
 import * as vscode from "vscode";
 import { Connection } from "@libp2p/interface-connection";
-import { PeerInfo } from "@libp2p/interface-peer-info";
 import { pipe } from "it-pipe";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
@@ -65,9 +62,13 @@ export const createNode = async (props: {
       hop: { enabled: true },
     },
   });
-  await node.start();
-  // p2pShareProvider.addItem(toHumanReadableName(node.peerId.toString()));
-  // p2pShareProvider.refresh();
+  await node.start()!.then(
+    undefined,
+    (error) => {
+      console.log(error);
+    }
+  );
+    
   logger().info("Peer started", {
     // id: peerName(),
     addresses: node
@@ -81,7 +82,7 @@ export async function addCommonListeners(
   ctx: vscode.ExtensionContext,
   node: Libp2p
 ) {
-  var em = emitter;
+  const em = emitter;
   const answer = await vscode.window.showInformationMessage(
     "Do you have Docker installed & running?",
     "Yes",
@@ -134,7 +135,6 @@ export async function addCommonListeners(
           console.log(msg);
           if (msg.includes('{"command":')) {
             em.emit("CommandEvent", JSON.parse(msg));
-            continue;
           } else {
             handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
           }
