@@ -60,7 +60,7 @@
     "viewsWelcome": [
       {
         "view": "welcome",
-        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)",
+        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)\nDisconnect from network.\n[Disconnect](command:colab.disconnect)\nSend project file to peer.\n[Send project files](command:colab.sendProjectFiles)",
         "when": "isLinux||isWindows"
       },
       {
