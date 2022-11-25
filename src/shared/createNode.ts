@@ -83,22 +83,12 @@ export async function addCommonListeners(
   node: Libp2p
 ) {
   const em = emitter;
-  const answer = await vscode.window.showInformationMessage(
-    "Do you have Docker installed & running?",
-    "Yes",
-    "No"
-  );
+  
   node.connectionManager.addEventListener("peer:connect", async (evt) => {
     const connection = evt.detail as Connection;
     logger().info(
       `${node.peerId}: Connected to ${connection.remotePeer.toString()}`
     ); // Log connected peer
-
-    // Contact connected peer, to let them know, that i am dockerable.
-    if (answer === "Yes") {
-      let stream = await connection.newStream("/docker");
-      stream.reset();
-    }
   });
 
   node.handle("/docker", ({ stream, connection }) => {

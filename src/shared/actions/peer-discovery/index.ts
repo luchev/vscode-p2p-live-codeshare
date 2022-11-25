@@ -1,10 +1,13 @@
 import { logger } from "../../logger";
 import { toHumanReadableName } from "../../nameGenerator";
 import { p2pShareProvider } from '../../../sessionData';
+import { Peer } from "../../entity/peer";
+import { Connection } from "@libp2p/interface-connection";
 
 let _discoveredPeersMap: { [peerName: string]: Set<string> } = {};
 
-export function handlePeerDiscovery(event: any, peerName: string) {
+export async function handlePeerDiscovery(event: any, peer: Peer) {
+  const peerName = peer.peerName();
   if (_discoveredPeersMap[peerName] === undefined) {
     _discoveredPeersMap[peerName] = new Set();
   }
@@ -18,4 +21,11 @@ export function handlePeerDiscovery(event: any, peerName: string) {
   p2pShareProvider.addItem(peerId);
   p2pShareProvider.refresh();
   logger().info(`${peerName} discovered ${peerId}`);
+
+  // Contact connected peer, to let them know, that i am dockerable.
+  if (peer.isDockerable) {
+    const connection = event.detail as Connection;
+    let stream = await connection.newStream("/docker");
+    stream.reset();
+  }
 }

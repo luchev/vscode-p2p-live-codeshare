@@ -1,11 +1,12 @@
+import * as vscode from 'vscode';
 import type { PeerId } from "@libp2p/interface-peer-id";
 import { existsSync, lstatSync, rmSync } from "fs";
 import { Libp2p } from "libp2p";
 import path from "path";
 import { ExtensionContext, workspace } from "vscode";
 import { handlePeerDiscovery } from "../actions/peer-discovery";
-import {handleWorkspaceEvent} from "../actions/workspace";
-import {Topics} from "../constants";
+import { handleWorkspaceEvent } from "../actions/workspace";
+import { Topics } from "../constants";
 import { addCommonListeners, createNode } from "../createNode";
 import {
   onFileChanged,
@@ -14,10 +15,12 @@ import {
 } from "../listeners/workspace";
 import { toHumanReadableName } from "../nameGenerator";
 
+
 export class Peer {
   peer?: Libp2p;
   name?: string;
   isInitialized?: boolean;
+  isDockerable?: boolean;
   settingsFile = 'peer_settings.json';
 
   constructor() {
@@ -49,6 +52,11 @@ export class Peer {
     }
     this.peer = await createNode({});
     this.isInitialized = true;
+    this.isDockerable = (await vscode.window.showInformationMessage(
+      "Do you have Docker installed & running?",
+      "Yes",
+      "No"
+    )) === 'Yes';
     return this;
   }
 
@@ -58,9 +66,14 @@ export class Peer {
     }
 
     return createNode({ peerId: peerId, port: port, bootstrapAddresses })
-      .then((peer) => {
+      .then(async (peer) => {
         this.peer = peer;
         this.isInitialized = true;
+        this.isDockerable = (await vscode.window.showInformationMessage(
+          "Do you have Docker installed & running?",
+          "Yes",
+          "No"
+        )) === 'Yes';
         return Promise.resolve(this);
       })
       .catch((err) => {
@@ -73,9 +86,8 @@ export class Peer {
       return Promise.reject("Cannot init publisher before peer is started");
     }
 
-    this.peer.addEventListener("peer:discovery", (event) =>
-      handlePeerDiscovery(event, this.peerName())
-    );
+    this.peer.addEventListener("peer:discovery", async (event) =>
+      handlePeerDiscovery(event, this));
 
     workspace.onDidCreateFiles((event) =>
       onFileOrDirectoryCreated(this.peer!, event)
@@ -101,7 +113,7 @@ export class Peer {
 
     this.peer.pubsub.subscribe(Topics.workspaceUpdates);
     this.peer.addEventListener("peer:discovery", (event) =>
-      handlePeerDiscovery(event, this.peerName())
+      handlePeerDiscovery(event, this)
     );
     this.peer.pubsub.subscribe(Topics.workspaceUpdates);
     this.peer.pubsub.addEventListener("message", (event) => {

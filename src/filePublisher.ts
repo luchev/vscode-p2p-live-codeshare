@@ -12,6 +12,7 @@ import {peer} from './shared/state/peer';
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
 	if (vscode.workspace.workspaceFolders !== undefined) {
+		let selfNode = await peer().p2p();
 		let ws = vscode.workspace.workspaceFolders[0];
 
 		if (vscode.window.activeTextEditor !== undefined) {
@@ -27,15 +28,13 @@ async function publishFiles(context: vscode.ExtensionContext) {
 		var zip = new AdmZip();
 		zip.addLocalFolder(wsuri.fsPath);
 
-		let userId = 'user123';
+		let userId = selfNode.peerId.toString();
 		let zipName = ws.name;
 		let zipBuffer = zip.toBuffer();
 
 		let message = new DockerFilesMessage(userId, zipName, zipBuffer);
 
 		let jsonMsg = JSON.stringify(message);
-
-		let selfNode = await peer().p2p();
 
 		// if(!selfNode) {await setupSubscriber(context);}
 
