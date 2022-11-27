@@ -139,8 +139,10 @@ async function destroyContainer(context: vscode.ExtensionContext) {
 	if (peer().currentDockerPeerStream) {
 		let currentDockerPeerStream = peer().currentDockerPeerStream!;
 
+		let destroyContainerPushable: Pushable<string> = pushable<string>({ objectMode: true });
+
 		pipe(
-			[JSON.stringify(new DestroyContainerMessage())],
+			destroyContainerPushable,
 			(source) => {
 				return (async function* () {
 					for await (const msg of source) { yield uint8ArrayFromString(msg); };
@@ -149,7 +151,11 @@ async function destroyContainer(context: vscode.ExtensionContext) {
 			currentDockerPeerStream
 		);
 
-		peer().currentDockerPeerStream = undefined;
+		let destroyContainerMessage = new DestroyContainerMessage();
+
+		destroyContainerPushable.push(JSON.stringify(destroyContainerMessage));
+
+		//peer().currentDockerPeerStream = undefined;
 	}
 }
 
