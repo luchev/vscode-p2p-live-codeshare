@@ -14,6 +14,7 @@ import {
   onFileOrDirectoryDeleted,
 } from "../listeners/workspace";
 import { toHumanReadableName } from "../nameGenerator";
+import {Stream} from '@libp2p/interface-connection';
 
 
 export class Peer {
@@ -22,6 +23,7 @@ export class Peer {
   isInitialized?: boolean;
   isDockerable?: boolean;
   settingsFile = 'peer_settings.json';
+  currentDockerPeerStream?: Stream;
 
   constructor() {
     this.isInitialized = false;

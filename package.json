@@ -14,6 +14,7 @@
     "onCommand:colab.setupPublisher",
     "onView:colab",
     "onCommand:colab.sendProjectFiles",
+    "onCommand:colab.destroyContainer",
     "onCommand:colab.disconnect"
   ],
   "main": "./dist/extension.js",
@@ -34,6 +35,10 @@
       {
         "command": "colab.sendProjectFiles",
         "title": "Colab: Send project files to Docker-able machine"
+      },
+      {
+        "command": "colab.destroyContainer",
+        "title": "Colab: Destroy docker container running on remote machine"
       }
     ],
     "viewsContainers": {
@@ -60,7 +65,7 @@
     "viewsWelcome": [
       {
         "view": "welcome",
-        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)\nDisconnect from network.\n[Disconnect](command:colab.disconnect)\nSend project file to peer.\n[Send project files](command:colab.sendProjectFiles)",
+        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)\nDisconnect from network.\n[Disconnect](command:colab.disconnect)\nSend project file to peer.\n[Send project files](command:colab.sendProjectFiles)\nDestroy Docker container running on remote machine.\n[Destroy container](command:colab.destroyContainer)",
         "when": "isLinux||isWindows"
       },
       {

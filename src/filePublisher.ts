@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import AdmZip from 'adm-zip';
-import { CommandMessage, DockerFilesMessage } from './models/DockerFilesMessage';
+import { CommandMessage, DestroyContainerMessage, DockerFilesMessage } from './models/DockerFilesMessage';
 import { logger } from './shared/logger';
 import { pipe } from 'it-pipe';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
@@ -52,6 +52,8 @@ async function publishFiles(context: vscode.ExtensionContext) {
 		let dockerablePeer = dockerablePeers[randomInt(dockerablePeers.length)];
 
 		let stream = await selfNode.dialProtocol(dockerablePeer.id, '/zip');
+
+		peer().currentDockerPeerStream = stream;
 
 		const writeEmitter = new vscode.EventEmitter<string>();
 		let command = '';
@@ -132,6 +134,29 @@ async function filter(arr: Peer[], callback: any) {
 	return result;
 }
 
+
+async function destroyContainer(context: vscode.ExtensionContext) {
+	if (peer().currentDockerPeerStream) {
+		let currentDockerPeerStream = peer().currentDockerPeerStream!;
+
+		pipe(
+			[JSON.stringify(new DestroyContainerMessage())],
+			(source) => {
+				return (async function* () {
+					for await (const msg of source) { yield uint8ArrayFromString(msg); };
+				})();
+			},
+			currentDockerPeerStream
+		);
+
+		peer().currentDockerPeerStream = undefined;
+	}
+}
+
 export function registerFilePublisher(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('colab.sendProjectFiles', async () => await publishFiles(context)));
+}
+
+export function registerDestroyContainer(context: vscode.ExtensionContext) {
+	context.subscriptions.push(vscode.commands.registerCommand('colab.destroyContainer', async () => await destroyContainer(context)));
 }
