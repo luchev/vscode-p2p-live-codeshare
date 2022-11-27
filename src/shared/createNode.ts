@@ -114,7 +114,7 @@ export async function addCommonListeners(
       async (source) => {
         for await (const msg of source) {
           let data = JSON.parse(msg);
-          if (data instanceof DockerFilesMessage) {
+          if (DockerFilesMessage.isDockerFilesMessage(data)) {
             handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
           }
         }

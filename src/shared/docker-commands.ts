@@ -66,9 +66,9 @@ export class Docker {
             async (source) => {
                 for await (const msg of source) {
                     let data = JSON.parse(msg);
-                    if (data instanceof CommandMessage) {
+                    if (CommandMessage.isCommandMessage(data)) {
                         this.runner!.stdin?.write(data.command + '\n\r');
-                    } else if (data instanceof DestroyContainerMessage) {
+                    } else if (DestroyContainerMessage.isDestroyContainerMessage(data)) {
                         this.runner!.kill();
                     }
                 }
