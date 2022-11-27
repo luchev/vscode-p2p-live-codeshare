@@ -15,6 +15,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { handleReceivedDockerContent } from "./dockerfiles-receiver";
 import type { PeerId } from "@libp2p/interface-peer-id";
+import { DockerFilesMessage } from "../models/DockerFilesMessage";
 
 // export const createNode = async (bootstrapAddresses: string[]) => {
 //   let peerDiscovery = [
@@ -112,7 +113,8 @@ export async function addCommonListeners(
       },
       async (source) => {
         for await (const msg of source) {
-          if (!msg.includes('{"command":')) {
+          let data = JSON.parse(msg);
+          if (data instanceof DockerFilesMessage) {
             handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
           }
         }

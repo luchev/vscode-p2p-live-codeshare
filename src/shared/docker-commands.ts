@@ -8,7 +8,7 @@ import { pipe } from 'it-pipe';
 import { pushable, Pushable } from 'it-pushable';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { CommandMessage } from '../models/DockerFilesMessage';
+import { CommandMessage, DestroyContainerMessage } from '../models/DockerFilesMessage';
 import * as glob from 'glob';
 
 export class Docker {
@@ -65,9 +65,11 @@ export class Docker {
             },
             async (source) => {
                 for await (const msg of source) {
-                    if (msg.includes('{"command":')) {
-                        let data: CommandMessage = JSON.parse(msg);
+                    let data = JSON.parse(msg);
+                    if (data instanceof CommandMessage) {
                         this.runner!.stdin?.write(data.command + '\n\r');
+                    } else if (data instanceof DestroyContainerMessage) {
+                        this.runner!.kill();
                     }
                 }
             }

@@ -16,3 +16,7 @@ export class CommandMessage {
 		this.command = command;
 	}
 }
+
+export class DestroyContainerMessage {
+	destroyContainer = true;
+}
