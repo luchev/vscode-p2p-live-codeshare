@@ -141,7 +141,8 @@ async function filter(arr: Peer[], callback: any) {
 }
 
 
-async function destroyContainer(context: vscode.ExtensionContext) {
+function destroyContainer(context: vscode.ExtensionContext) {
+	emitter.emit("DestroyContainer");
 	emitter.emit("DestroyContainer");
 }
 
@@ -150,5 +151,5 @@ export function registerFilePublisher(context: vscode.ExtensionContext) {
 }
 
 export function registerDestroyContainer(context: vscode.ExtensionContext) {
-	context.subscriptions.push(vscode.commands.registerCommand('colab.destroyContainer', async () => await destroyContainer(context)));
+	context.subscriptions.push(vscode.commands.registerCommand('colab.destroyContainer', () => destroyContainer(context)));
 }
