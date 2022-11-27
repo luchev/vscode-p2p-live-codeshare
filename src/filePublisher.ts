@@ -9,6 +9,7 @@ import { randomInt } from 'crypto';
 import { pushable, Pushable } from 'it-pushable';
 import { peer } from './shared/state/peer';
 import { Peer } from '@libp2p/interface-peer-store';
+import emitter from './shared/eventEmitter';
 
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
@@ -68,6 +69,11 @@ async function publishFiles(context: vscode.ExtensionContext) {
 			},
 			stream
 		);
+
+		emitter.addListener("DestroyContainer", () => {
+			let dm = new DestroyContainerMessage();
+			consoleOutput.push(JSON.stringify(dm));
+		});
 
 		consoleOutput.push(jsonMsg);
 
@@ -136,27 +142,7 @@ async function filter(arr: Peer[], callback: any) {
 
 
 async function destroyContainer(context: vscode.ExtensionContext) {
-	if (peer().currentDockerPeerStream) {
-		let currentDockerPeerStream = peer().currentDockerPeerStream!;
-
-		let destroyContainerPushable: Pushable<string> = pushable<string>({ objectMode: true });
-
-		pipe(
-			destroyContainerPushable,
-			(source) => {
-				return (async function* () {
-					for await (const msg of source) { yield uint8ArrayFromString(msg); };
-				})();
-			},
-			currentDockerPeerStream
-		);
-
-		let destroyContainerMessage = new DestroyContainerMessage();
-
-		destroyContainerPushable.push(JSON.stringify(destroyContainerMessage));
-
-		//peer().currentDockerPeerStream = undefined;
-	}
+	emitter.emit("DestroyContainer");
 }
 
 export function registerFilePublisher(context: vscode.ExtensionContext) {

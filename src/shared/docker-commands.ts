@@ -69,7 +69,7 @@ export class Docker {
                     if (CommandMessage.isCommandMessage(data)) {
                         this.runner!.stdin?.write(data.command + '\n\r');
                     } else if (DestroyContainerMessage.isDestroyContainerMessage(data)) {
-                        this.runner!.kill();
+                        this.spawnSync("powershell.exe", [`docker rm -f ${containerName}`], shellOpts);
                     }
                 }
             }
