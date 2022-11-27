@@ -28,7 +28,7 @@ async function publishFiles(context: vscode.ExtensionContext) {
 		var zip = new AdmZip();
 		zip.addLocalFolder(wsuri.fsPath);
 
-		let userId = selfNode.peerId.toString();
+		let userId = peer().peerName();
 		let zipName = ws.name;
 		let zipBuffer = zip.toBuffer();
 
