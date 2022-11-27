@@ -23,6 +23,6 @@ export async function handleReceivedDockerContent(context: vscode.ExtensionConte
 	let zip2 = new AdmZip(recivedMessage.zipBuffer);
 	let filePath = path.join(context.extensionPath, recivedMessage.userId, recivedMessage.zipName);
 	zip2.extractAllTo(filePath, true);
-
-	Docker.buildAndStartDockerContainer(context, filePath, stream);
+	let docker = new Docker();
+	docker.buildAndStartDockerContainer(context, filePath, stream);
 }

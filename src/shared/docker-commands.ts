@@ -9,22 +9,19 @@ import { pushable, Pushable } from 'it-pushable';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { CommandMessage } from '../models/DockerFilesMessage';
-import emitter from './events';
 import * as glob from 'glob';
 
 export class Docker {
-    private static consoleOutput: Pushable<string> = pushable<string>({ objectMode: true });
+    private consoleOutput: Pushable<string> = pushable<string>({ objectMode: true });
+    private runner: cp.ChildProcess | undefined;
     constructor() { }
 
     @log()
-    public static async buildAndStartDockerContainer(context: vscode.ExtensionContext, folderPath: string, stream: Stream): Promise<void> {
+    public async buildAndStartDockerContainer(context: vscode.ExtensionContext, folderPath: string, stream: Stream): Promise<void> {
         const shellOpts: cp.SpawnOptions = { cwd: context.extensionPath };
 
         // Glob pattern to search for dockerfiles, under the workspace folder
-        let dockerFilePattern = new vscode.RelativePattern(folderPath, '**/Dockerfile*');
-        let dockerfiles = glob.sync('**/Dockerfile*', {cwd: folderPath});
-        // const dockerfiles = mg.found;
-        // const dockerfiles = await vscode.workspace.findFiles(dockerFilePattern, null, 50);
+        let dockerfiles = glob.sync('**/Dockerfile*', { cwd: folderPath });
 
         if (dockerfiles.length === 0) {
             let errorMsg = 'Could not find any dockerfiles :(';
@@ -68,7 +65,10 @@ export class Docker {
             },
             async (source) => {
                 for await (const msg of source) {
-                    console.log(msg);
+                    if (msg.includes('{"command":')) {
+                        let data: CommandMessage = JSON.parse(msg);
+                        this.runner!.stdin?.write(data.command + '\n\r');
+                    }
                 }
             }
         );
@@ -84,7 +84,7 @@ export class Docker {
     }
 
     @log()
-    public static spawnSync(cmd: string, args: any[], opts: cp.SpawnOptions) {
+    public spawnSync(cmd: string, args: any[], opts: cp.SpawnOptions) {
         const spawn = cp.spawnSync(cmd, args, opts);
         if (spawn.error) {
             const errorMsg = `ERROR: ${spawn.error}\n`;
@@ -105,26 +105,21 @@ export class Docker {
     }
 
     @log()
-    public static spawn(cmd: string, args: any[], opts: cp.SpawnOptions) {
-        const runner = cp.spawn(cmd, args, opts);
-
-        var em = emitter;
-        em.on('CommandEvent', (data: CommandMessage) => {
-            runner.stdin?.write(data.command + '\n\r');
-        });
+    public spawn(cmd: string, args: any[], opts: cp.SpawnOptions) {
+        this.runner = cp.spawn(cmd, args, opts);
 
         // Pipe outputs.
-        runner.stdout!.on('data', (data) => {
+        this.runner.stdout!.on('data', (data) => {
             //console.log(`stdout: ${data}`);
             this.consoleOutput.push(`${data}`);
         });
 
-        runner.stderr!.on('data', (data) => {
+        this.runner.stderr!.on('data', (data) => {
             //console.error(`stderr: ${data}`);
             this.consoleOutput.push(`${data}`);
         });
 
-        runner.on('close', (code) => {
+        this.runner.on('close', (code) => {
             //console.log(`child process exited with code ${code}`);
             this.consoleOutput.push(`child process exited with code ${code}`);
         });

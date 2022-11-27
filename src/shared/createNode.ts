@@ -14,7 +14,6 @@ import { pipe } from "it-pipe";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { handleReceivedDockerContent } from "./dockerfiles-receiver";
-import emitter from "./events";
 import type { PeerId } from "@libp2p/interface-peer-id";
 
 // export const createNode = async (bootstrapAddresses: string[]) => {
@@ -68,7 +67,7 @@ export const createNode = async (props: {
       console.log(error);
     }
   );
-    
+
   logger().info("Peer started", {
     // id: peerName(),
     addresses: node
@@ -82,8 +81,6 @@ export async function addCommonListeners(
   ctx: vscode.ExtensionContext,
   node: Libp2p
 ) {
-  const em = emitter;
-  
   node.connectionManager.addEventListener("peer:connect", async (evt) => {
     const connection = evt.detail as Connection;
     logger().info(
@@ -91,19 +88,12 @@ export async function addCommonListeners(
     ); // Log connected peer
   });
 
-  node.handle("/docker", ({ stream, connection }) => {
-    logger().info(
-      `${node.peerId}: Peer ${connection.remotePeer.toString()} is Dockerable`
-    ); // Log discovered peer
+  node.handle("/docker", async ({ stream, connection }) => {
+    logger().info(`${node.peerId}: Peer ${connection.remotePeer.toString()} is Dockerable`); // Log discovered peer
     node.peerStore
       .tagPeer(connection.remotePeer, "dockerable")
-      .then((value) => {
-        console.log(value);
-      })
-      .catch((reason) => {
-        console.log(reason);
-      })
-      .finally(() => null);
+      .then((_) => null)
+      .catch((_) => null);
   });
 
   node.handle("/zip", async ({ stream, connection }) => {
@@ -122,10 +112,7 @@ export async function addCommonListeners(
       },
       async (source) => {
         for await (const msg of source) {
-          console.log(msg);
-          if (msg.includes('{"command":')) {
-            em.emit("CommandEvent", JSON.parse(msg));
-          } else {
+          if (!msg.includes('{"command":')) {
             handleReceivedDockerContent(ctx, uint8ArrayFromString(msg), stream);
           }
         }
