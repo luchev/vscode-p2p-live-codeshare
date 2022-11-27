@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import type { PeerId } from "@libp2p/interface-peer-id";
 import { existsSync, lstatSync, rmSync } from "fs";
 import { Libp2p } from "libp2p";
 import path from "path";
@@ -14,6 +13,8 @@ import {
   onFileOrDirectoryDeleted,
 } from "../listeners/workspace";
 import { toHumanReadableName } from "../nameGenerator";
+import { readSettingsFile, writeSettingsFile } from '../settingsHandler';
+import { logger } from '../logger';
 
 
 export class Peer {
@@ -46,11 +47,11 @@ export class Peer {
     return toHumanReadableName((this.peer?.peerId ?? "").toString());
   }
 
-  async new() {
+  async new(bootstrapAddresses?: string[]) {
     if (this.isInitialized) {
       throw new Error("Cannot initialize a peer, which is already initialized");
     }
-    this.peer = await createNode({});
+    this.peer = await createNode({bootstrapAddresses: bootstrapAddresses});
     this.isInitialized = true;
     this.isDockerable = (await vscode.window.showInformationMessage(
       "Do you have Docker installed & running?",
@@ -60,25 +61,73 @@ export class Peer {
     return this;
   }
 
-  async recover(peerId: PeerId, port: number, bootstrapAddresses?: string[]) {
+  /**
+   * Recovers node {@link peer} based on saved parameters (peerId and port) from file {@link settingsFile}.
+   * 
+   * @param ctx 
+   * @param bootstrapAddresses 
+   * @returns 
+   */
+  async recover(ctx: vscode.ExtensionContext, bootstrapAddresses?: string[]) {
     if (this.isInitialized) {
       return Promise.reject("Cannot double initialize a peer");
     }
 
-    return createNode({ peerId: peerId, port: port, bootstrapAddresses })
-      .then(async (peer) => {
-        this.peer = peer;
-        this.isInitialized = true;
-        this.isDockerable = (await vscode.window.showInformationMessage(
-          "Do you have Docker installed & running?",
-          "Yes",
-          "No"
-        )) === 'Yes';
-        return Promise.resolve(this);
-      })
-      .catch((err) => {
-        return Promise.reject(err);
-      });
+    await readSettingsFile(ctx, this.settingsFile).then(
+      (peerSettings) => {
+      return createNode({ peerId: peerSettings.peerId, port: peerSettings.port, bootstrapAddresses: bootstrapAddresses })
+        .then(async (peer) => {
+          this.peer = peer;
+          this.isInitialized = true;
+          this.isDockerable = (await vscode.window.showInformationMessage(
+            "Do you have Docker installed & running?",
+            "Yes",
+            "No"
+          )) === 'Yes';
+          return Promise.resolve(this);
+        })
+        .catch((err) => {
+          return Promise.reject(err);
+        });
+    });
+  }
+
+  async connect(ctx: vscode.ExtensionContext, bootstrapAddresses?: string[]) {
+    const reconnect = (await vscode.window.showInformationMessage(
+      "Do you want to reconnect to the network?",
+      "Yes",
+      "No"
+    )) === 'Yes';
+
+    if (reconnect) {
+      return this.recover(ctx, bootstrapAddresses).then(
+        (peer) => {
+          return peer;
+        },
+        () => {
+          logger().info("Unable to recover");
+          return this.new(bootstrapAddresses);
+        }
+      );
+    } else {
+      return this.new(bootstrapAddresses);
+    }
+  }
+
+  /**
+   * Writes the peer settings (peerId and port) to file. {@link settingsFile}.
+   * It assume that the {@link peer} variable is fully started, i.e. has its peerId and port.
+   * @param ctx 
+   */
+  writeSettingsToFile(ctx: vscode.ExtensionContext) {
+    const multiAddrs = this.peer!.getMultiaddrs();
+    if (multiAddrs.length === 0) {
+      logger().error("Peer node has no multiaddrs.");
+    } else {
+      const port = multiAddrs[0].nodeAddress().port;
+      const peerId = this.peer!.peerId;
+      writeSettingsFile(ctx, this.settingsFile, peerId, port); 
+    }
   }
 
   initPublisher(ctx: ExtensionContext) {
@@ -115,7 +164,6 @@ export class Peer {
     this.peer.addEventListener("peer:discovery", (event) =>
       handlePeerDiscovery(event, this)
     );
-    this.peer.pubsub.subscribe(Topics.workspaceUpdates);
     this.peer.pubsub.addEventListener("message", (event) => {
       handleWorkspaceEvent(event);
     });
