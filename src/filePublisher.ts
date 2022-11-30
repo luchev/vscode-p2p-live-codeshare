@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import AdmZip from 'adm-zip';
-import { CommandMessage, DockerFilesMessage } from './models/DockerFilesMessage';
+import { CommandMessage, DestroyContainerMessage, DockerFilesMessage } from './models/DockerFilesMessage';
 import { logger } from './shared/logger';
 import { pipe } from 'it-pipe';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { randomInt } from 'crypto';
 import { pushable, Pushable } from 'it-pushable';
-import {peer} from './shared/state/peer';
+import { peer } from './shared/state/peer';
+import { Peer } from '@libp2p/interface-peer-store';
+import emitter from './shared/eventEmitter';
 
 async function publishFiles(context: vscode.ExtensionContext) {
 	logger().info('Sending of projects files has been activated!');
@@ -28,7 +30,7 @@ async function publishFiles(context: vscode.ExtensionContext) {
 		var zip = new AdmZip();
 		zip.addLocalFolder(wsuri.fsPath);
 
-		let userId = selfNode.peerId.toString();
+		let userId = peer().peerName();
 		let zipName = ws.name;
 		let zipBuffer = zip.toBuffer();
 
@@ -36,20 +38,23 @@ async function publishFiles(context: vscode.ExtensionContext) {
 
 		let jsonMsg = JSON.stringify(message);
 
-		// if(!selfNode) {await setupSubscriber(context);}
-
 		let peers = await selfNode.peerStore.all();
-		let dockerablePeers = peers.filter(async (p) => {
+
+		const dockerablePeers = await filter(peers, async (p: Peer) => {
 			let tags = await selfNode.peerStore.getTags(p.id);
-			if (tags.filter((t) => t.name === 'dockerable').length > 0) {
+			let dockerTags = tags.filter((t) => t.name === 'dockerable');
+			if (dockerTags.length > 0) {
 				return true;
 			} else {
 				return false;
 			}
 		});
-		let peer2 = dockerablePeers[randomInt(dockerablePeers.length)];
 
-		let stream = await selfNode.dialProtocol(peer2.id, '/zip', );
+		let dockerablePeer = dockerablePeers[randomInt(dockerablePeers.length)];
+
+		let stream = await selfNode.dialProtocol(dockerablePeer.id, '/zip');
+
+		peer().currentDockerPeerStream = stream;
 
 		const writeEmitter = new vscode.EventEmitter<string>();
 		let command = '';
@@ -65,6 +70,11 @@ async function publishFiles(context: vscode.ExtensionContext) {
 			stream
 		);
 
+		emitter.addListener("DestroyContainer", () => {
+			let dm = new DestroyContainerMessage();
+			consoleOutput.push(JSON.stringify(dm));
+		});
+
 		consoleOutput.push(jsonMsg);
 
 		const pty: vscode.Pseudoterminal = {
@@ -77,7 +87,7 @@ async function publishFiles(context: vscode.ExtensionContext) {
 					let commandMsg = new CommandMessage(command);
 
 					consoleOutput.push(JSON.stringify(commandMsg));
-					
+
 					// send current command via stream
 					writeEmitter.fire('\r\n');
 					command = '';
@@ -110,12 +120,6 @@ async function publishFiles(context: vscode.ExtensionContext) {
 			}
 		);
 
-		// Send zip data to dockerable host.
-		/*pipe(
-			[uint8Array],
-			stream
-		);*/
-
 		logger().info(`Sent zipped folder: ${ws.name}`);
 		vscode.window.showInformationMessage(`Sent zipped folder: ${ws.name}`);
 	} else {
@@ -123,6 +127,29 @@ async function publishFiles(context: vscode.ExtensionContext) {
 	}
 }
 
+async function filter(arr: Peer[], callback: any) {
+	const fail = Symbol();
+	let tmp = (await Promise.all(arr.map(async item => (await callback(item)) ? item : fail)));
+	let result: Peer[] = [];
+
+	tmp.forEach((item) => {
+		if (item !== fail) {
+			result.push(item);
+		}
+	});
+	return result;
+}
+
+
+function destroyContainer(context: vscode.ExtensionContext) {
+	emitter.emit("DestroyContainer");
+	emitter.emit("DestroyContainer");
+}
+
 export function registerFilePublisher(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('colab.sendProjectFiles', async () => await publishFiles(context)));
+}
+
+export function registerDestroyContainer(context: vscode.ExtensionContext) {
+	context.subscriptions.push(vscode.commands.registerCommand('colab.destroyContainer', () => destroyContainer(context)));
 }

@@ -15,6 +15,7 @@ import {
 import { toHumanReadableName } from "../nameGenerator";
 import { readSettingsFile, writeSettingsFile } from '../settingsHandler';
 import { logger } from '../logger';
+import {Stream} from '@libp2p/interface-connection';
 
 
 export class Peer {
@@ -23,6 +24,7 @@ export class Peer {
   isInitialized?: boolean;
   isDockerable?: boolean;
   settingsFile = 'peer_settings.json';
+  currentDockerPeerStream?: Stream;
 
   constructor() {
     this.isInitialized = false;
