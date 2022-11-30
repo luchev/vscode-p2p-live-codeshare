@@ -41,6 +41,7 @@ class PeerNodeProvider implements vscode.TreeDataProvider<PeerData> {
 			peer.addChild(new PeerData(properties[property]));
 		}
         this.peers.push(peer);
+		this.refresh();
     }
 
 	addPropertyToItem(label:string, property:string) {
@@ -48,10 +49,16 @@ class PeerNodeProvider implements vscode.TreeDataProvider<PeerData> {
 		if (peerFound) {
 			peerFound.addChild(new PeerData(property));
 		}
+		this.refresh();
 	}
 
 	findPeerDataByLabel(label:string) {
-		return this.peers.find((peer) => {return peer.label === label});
+		return this.peers.find(
+			(peer) => 
+				{
+					return peer.label === label;
+				}
+		);
 	}
 
 	reset() {
