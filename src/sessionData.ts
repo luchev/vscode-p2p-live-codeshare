@@ -1,54 +1,76 @@
 import * as vscode from 'vscode';
-import { logger } from './shared/logger';
 
-class PeerNodeProvider implements vscode.TreeDataProvider<Peer> {
+class PeerNodeProvider implements vscode.TreeDataProvider<PeerData> {
 
-	private _onDidChangeTreeData: vscode.EventEmitter<Peer | undefined | void> = new vscode.EventEmitter<Peer | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<Peer | undefined | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<PeerData | undefined | void> = new vscode.EventEmitter<PeerData | undefined | void>();
+	readonly onDidChangeTreeData: vscode.Event<PeerData | undefined | void> = this._onDidChangeTreeData.event;
 
-    private peers : Peer [];
+    private peers : PeerData [];
 
 	constructor() {
 		this.peers = [];
+		vscode.commands.registerCommand('session.refresh', () => this.refresh());
+		vscode.commands.registerCommand('session.itemClicked', e => this.itemClicked(e));
 	}
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
 	}
 
-	getNode(): Thenable<Peer> {
-		if (this.peers.length === 0) {
-			logger().error("There is no registered peer in the tree view.");
-			return new Promise(resolve => {logger().info("shit");});
-		} else {
-			return new Promise(resolve => {logger().info("works");return this.peers[0];});
-		}
+	itemClicked(element: PeerData) {
+		vscode.env.clipboard.writeText(element.label!.toString());
 	}
 
-	getTreeItem(element: Peer): vscode.TreeItem {
-        const item = new vscode.TreeItem(element.label, element.collapsibleState);
+	getTreeItem(element: PeerData): vscode.TreeItem |Thenable<vscode.TreeItem>{
+        const item = new vscode.TreeItem(element.label!, element.collapsibleState);
+		item.command = { command: 'session.itemClicked', title : "title", arguments: [element] };
 		return item;
 	}
 
-	getChildren(element?: Peer): vscode.ProviderResult<Peer[]> {
-		return this.peers;
+	getChildren(element: PeerData | undefined): vscode.ProviderResult<PeerData[]> {
+		if (element === undefined) {
+			return this.peers;
+		} else {
+			return element.properties;
+		}
 	}
 
-    addItem(peerId:string) {
-        this.peers.push(new Peer(peerId));
+    addItem(peerId:string, properties:string[]) {
+		const peer = new PeerData(peerId);
+		for (const property in properties){
+			peer.addChild(new PeerData(properties[property]));
+		}
+        this.peers.push(peer);
     }
+
+	addPropertyToItem(label:string, property:string) {
+		let peerFound = this.findPeerDataByLabel(label);
+		if (peerFound) {
+			peerFound.addChild(new PeerData(property));
+		}
+	}
+
+	findPeerDataByLabel(label:string) {
+		return this.peers.find((peer) => {return peer.label === label});
+	}
 
 	reset() {
 		this.peers = [];
 	}
 }
 
-class Peer extends vscode.TreeItem {
+class PeerData extends vscode.TreeItem {
 
-	constructor(
-		public readonly label: string
-	) {
-		super(label);
+	public properties: PeerData[] = [];
+
+	constructor(label:string) {
+		super(label, vscode.TreeItemCollapsibleState.None);
+		this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+	}
+
+	public addChild(child:PeerData) {
+		this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+		this.properties.push(child);
 	}
 
 	contextValue = 'peer';

@@ -39,6 +39,10 @@
       {
         "command": "colab.destroyContainer",
         "title": "Colab: Destroy docker container running on remote machine"
+      },
+      {
+        "command": "session.itemClicked",
+        "title": "tree item clicked"
       }
     ],
     "viewsContainers": {
@@ -69,7 +73,7 @@
         "when": "isLinux||isWindows"
       },
       {
-        "view": "session2",
+        "view": "session",
         "contents": "Join a network.",
         "when": "isLinux||isWindows"
       }
