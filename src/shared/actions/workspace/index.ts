@@ -18,13 +18,16 @@ const workspaceActionHandlers = {
 };
 
 export function handleWorkspaceEvent(event: any) {
+  const now = Date.now();
   const topic = event.detail.topic;
   if (topic !== Topics.workspaceUpdates) {
     return;
   }
-  const latency = Date.now() - event.detail.data.timestampForMeasurements;
-  logger().info(`Latency: ${latency}ms`);
+  
   const message = fromWire(event.detail.data);
+
+  const latency = now - message.timestampForMeasurements;
+  logger().info(`Latency: ${latency}ms`);
 
   if (WorkspaceEventType[message.type] === undefined) {
     logger().info("Received invalid workspace event", {type: message.type});
