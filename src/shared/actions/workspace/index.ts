@@ -17,6 +17,9 @@ const workspaceActionHandlers = {
   [WorkspaceEventType.syncWorkspace]: handleCreateDirectory,
 };
 
+let totalLatency = 0;
+let numberOfMeasurements = 0;
+
 export function handleWorkspaceEvent(event: any) {
   const topic = event.detail.topic;
   if (topic !== Topics.workspaceUpdates) {
@@ -27,6 +30,11 @@ export function handleWorkspaceEvent(event: any) {
 
   const latency = Date.now() - message.timestampForMeasurements;
   logger().info(`Latency: ${latency}ms`);
+
+  totalLatency += latency;
+  numberOfMeasurements += 1;
+
+  logger().info(`Average Latency: ${totalLatency / numberOfMeasurements}`);
 
   if (WorkspaceEventType[message.type] === undefined) {
     logger().info("Received invalid workspace event", {type: message.type});
