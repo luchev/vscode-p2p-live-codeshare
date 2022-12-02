@@ -1,5 +1,5 @@
 import { Topics } from "../../constants";
-import { fromWire, WorkspaceEventType } from "../../events/workspace/event";
+import { fromWire, toWire, WorkspaceEventType } from "../../events/workspace/event";
 import { logger } from "../../logger";
 import { handleCreateFile } from "./create-file";
 import { workspace } from "vscode";
@@ -18,7 +18,6 @@ const workspaceActionHandlers = {
 };
 
 export function handleWorkspaceEvent(event: any) {
-  const now = Date.now();
   const topic = event.detail.topic;
   if (topic !== Topics.workspaceUpdates) {
     return;
@@ -26,7 +25,7 @@ export function handleWorkspaceEvent(event: any) {
   
   const message = fromWire(event.detail.data);
 
-  const latency = now - message.timestampForMeasurements;
+  const latency = Date.now() - message.timestampForMeasurements;
   logger().info(`Latency: ${latency}ms`);
 
   if (WorkspaceEventType[message.type] === undefined) {
