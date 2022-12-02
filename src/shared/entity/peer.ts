@@ -15,6 +15,7 @@ import {
 } from "../listeners/workspace";
 import { toHumanReadableName } from "../nameGenerator";
 import {Stream} from '@libp2p/interface-connection';
+import { logger } from '../logger';
 
 
 export class Peer {
@@ -119,6 +120,8 @@ export class Peer {
     );
     this.peer.pubsub.subscribe(Topics.workspaceUpdates);
     this.peer.pubsub.addEventListener("message", (event) => {
+      const latency = Date.now() - event.detail.data.timestampForMeasurements;
+      logger().info(`Latency: ${latency}ms`);
       handleWorkspaceEvent(event);
     });
 
