@@ -24,6 +24,10 @@ export function handleWorkspaceEvent(event: any) {
   }
   const message = fromWire(event.detail.data);
 
+  const latency = Date.now() - message.timestampForMeasurements;
+
+  logger().info(`Latency: ${latency}ms`);
+
   if (WorkspaceEventType[message.type] === undefined) {
     logger().info("Received invalid workspace event", {type: message.type});
     throw new Error("Invalid workspace event");
@@ -38,6 +42,7 @@ export function handleWorkspaceEvent(event: any) {
     topic: topic,
     path: message.path.join("/"),
     type: message.type,
+    timestampForMeasurements: message.timestampForMeasurements
   });
 
   workspaceActionHandlers[message.type](message);
