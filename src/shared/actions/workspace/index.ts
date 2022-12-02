@@ -22,6 +22,8 @@ export function handleWorkspaceEvent(event: any) {
   if (topic !== Topics.workspaceUpdates) {
     return;
   }
+  const latency = Date.now() - event.detail.data.timestampForMeasurements;
+  logger().info(`Latency: ${latency}ms`);
   const message = fromWire(event.detail.data);
 
   if (WorkspaceEventType[message.type] === undefined) {
