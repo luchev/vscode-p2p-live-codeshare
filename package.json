@@ -49,7 +49,7 @@
       "activitybar": [
         {
           "id": "colab",
-          "title": "Peer to Peer Share",
+          "title": "Colab",
           "icon": "resources/folder.png"
         }
       ]
@@ -69,13 +69,11 @@
     "viewsWelcome": [
       {
         "view": "welcome",
-        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)\nDisconnect from network.\n[Disconnect](command:colab.disconnect)\nSend project file to peer.\n[Send project files](command:colab.sendProjectFiles)\nDestroy Docker container running on remote machine.\n[Destroy container](command:colab.destroyContainer)",
-        "when": "isLinux||isWindows"
+        "contents": "Start a subscriber node.\n[Setup Subscriber](command:colab.setupSubscriber)\nStart a publisher node.\n[Setup Publisher](command:colab.setupPublisher)\nDisconnect from network.\n[Disconnect](command:colab.disconnect)\nSend project file to peer.\n[Send project files](command:colab.sendProjectFiles)\nDestroy Docker container running on remote machine.\n[Destroy container](command:colab.destroyContainer)"
       },
       {
         "view": "session",
-        "contents": "Join a network.",
-        "when": "isLinux||isWindows"
+        "contents": "Join a network."
       }
     ]
   },
