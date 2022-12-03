@@ -10,3 +10,9 @@ export function peer() {
   _isInitialized = true;
   return _peer;
 }
+
+export let isWorkspaceSynced: boolean = false;
+
+export function setWorkspaceSynced(value: boolean) {
+  isWorkspaceSynced = value;
+}

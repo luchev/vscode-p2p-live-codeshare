@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import type { PeerId } from "@libp2p/interface-peer-id";
 import { existsSync, lstatSync, rmSync } from "fs";
 import { Libp2p } from "libp2p";
@@ -14,17 +14,21 @@ import {
   onFileOrDirectoryDeleted,
 } from "../listeners/workspace";
 import { toHumanReadableName } from "../nameGenerator";
-import {Stream} from '@libp2p/interface-connection';
-import { p2pShareProvider } from '../../sessionData';
-
+import { Stream } from "@libp2p/interface-connection";
+import { p2pShareProvider } from "../../sessionData";
+import { isWorkspaceSynced, setWorkspaceSynced } from "../state/peer";
+import { onWorkspaceSyncRequested } from "../listeners/workspace/workspace-sync-requested";
+import { logger } from "../logger";
+import { WorkspaceEventType } from "../events/workspace/event";
 
 export class Peer {
   peer?: Libp2p;
   name?: string;
   isInitialized?: boolean;
   isDockerable?: boolean;
-  settingsFile = 'peer_settings.json';
+  settingsFile = "peer_settings.json";
   currentDockerPeerStream?: Stream;
+  shouldRequestWorkspaceSync?: boolean;
 
   constructor() {
     this.isInitialized = false;
@@ -49,22 +53,33 @@ export class Peer {
     return toHumanReadableName((this.peer?.peerId ?? "").toString());
   }
 
-  async new(bootstrapAddresses?: string[]) {
+  async new(bootstrapAddresses?: string[], shouldRequestWorkspaceSync?: boolean) {
     if (this.isInitialized) {
       throw new Error("Cannot initialize a peer, which is already initialized");
     }
-    this.peer = await createNode({bootstrapAddresses:bootstrapAddresses});
+
+    this.peer = await createNode({ bootstrapAddresses: bootstrapAddresses });
     this.isInitialized = true;
-    this.isDockerable = (await vscode.window.showInformationMessage(
-      "Do you have Docker installed & running?",
-      "Yes",
-      "No"
-    )) === 'Yes';
+
+    this.isDockerable =
+      (await vscode.window.showInformationMessage(
+        "Do you have Docker installed & running?",
+        "Yes",
+        "No"
+      )) === "Yes";
+
+    this.shouldRequestWorkspaceSync = shouldRequestWorkspaceSync ?? false;
+
     this.extendTreeViewByPeer();
     return this;
   }
 
-  async recover(peerId: PeerId, port: number, bootstrapAddresses?: string[]) {
+  async recover(
+    peerId: PeerId,
+    port: number,
+    bootstrapAddresses?: string[],
+    shouldRequestWorkspaceSync?: boolean
+  ) {
     if (this.isInitialized) {
       return Promise.reject("Cannot double initialize a peer");
     }
@@ -73,11 +88,15 @@ export class Peer {
       .then(async (peer) => {
         this.peer = peer;
         this.isInitialized = true;
-        this.isDockerable = (await vscode.window.showInformationMessage(
-          "Do you have Docker installed & running?",
-          "Yes",
-          "No"
-        )) === 'Yes';
+        this.shouldRequestWorkspaceSync = shouldRequestWorkspaceSync ?? false;
+
+        this.isDockerable =
+          (await vscode.window.showInformationMessage(
+            "Do you have Docker installed & running?",
+            "Yes",
+            "No"
+          )) === "Yes";
+
         this.extendTreeViewByPeer();
         return Promise.resolve(this);
       })
@@ -91,8 +110,11 @@ export class Peer {
       return Promise.reject("Cannot init publisher before peer is started");
     }
 
+    addCommonListeners(ctx, this.peer);
+
     this.peer.addEventListener("peer:discovery", async (event) =>
-      handlePeerDiscovery(event, this));
+      handlePeerDiscovery(event, this)
+    );
 
     workspace.onDidCreateFiles((event) =>
       onFileOrDirectoryCreated(this.peer!, event)
@@ -104,12 +126,17 @@ export class Peer {
       onFileChanged(this.peer!, event)
     );
 
-    addCommonListeners(ctx, this.peer);
+    this.peer.pubsub.subscribe(Topics.workspaceSync);
+    this.peer.pubsub.addEventListener("message", (event) => {
+      handleWorkspaceEvent(event, {
+        whiteList: [WorkspaceEventType.syncWorkspaceRequest],
+      });
+    });
 
     return Promise.resolve(this);
   }
 
-  initSubscriber(ctx: ExtensionContext) {
+  async initSubscriber(ctx: ExtensionContext) {
     if (!this.peer) {
       return Promise.reject("Cannot init subscriber before peer is started");
     }
@@ -120,14 +147,22 @@ export class Peer {
     this.peer.addEventListener("peer:discovery", (event) =>
       handlePeerDiscovery(event, this)
     );
-    this.peer.pubsub.subscribe(Topics.workspaceUpdates);
     this.peer.pubsub.addEventListener("message", (event) => {
-      handleWorkspaceEvent(event);
+      handleWorkspaceEvent(event, {
+        blackList: [WorkspaceEventType.syncWorkspaceRequest],
+      });
     });
+
+    this.peer.pubsub.subscribe(Topics.workspaceSync);
+    if (this.shouldRequestWorkspaceSync) {
+      setWorkspaceSynced(false);
+      this.p2p()
+        .then((p2p) => onWorkspaceSyncRequested(p2p))
+        .catch((err) => logger().warn(err));
+    }
 
     return Promise.resolve(this);
   }
-
 
   async kill() {
     if (!this.isInitialized) {
@@ -147,18 +182,20 @@ export class Peer {
   }
 
   extendTreeViewByPeer() {
-    const multiaddrs = this.peer!.getMultiaddrs().filter(
-      (multiaddr) => {
+    const multiaddrs = this.peer!.getMultiaddrs()
+      .filter((multiaddr) => {
         if (multiaddr.toString().includes(this.peer!.peerId.toString())) {
           return true;
         } else {
           return false;
         }
-      }).map(
-        (multiaddr) => {
-          return multiaddr.toString();
-        }
-      );
-    p2pShareProvider.addItem(this.peerName(), multiaddrs.concat([this.isDockerable ? "Dockerable" : "Not dockerable"]));
+      })
+      .map((multiaddr) => {
+        return multiaddr.toString();
+      });
+    p2pShareProvider.addItem(
+      this.peerName(),
+      multiaddrs.concat([this.isDockerable ? "Dockerable" : "Not dockerable"])
+    );
   }
 }
