@@ -1,30 +1,54 @@
 import * as vscode from "vscode";
 import { Libp2p } from "libp2p";
-import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { peer2 } from "./shared/peers";
-import { createFromProtobuf } from "@libp2p/peer-id-factory";
 import {toast} from "./shared/toast";
 import {peer} from "./shared/state/peer";
+import { readSettingsFile, writeSettingsFile } from "./shared/settingsHandler";
+import { logger } from "./shared/logger";
 
 export async function setupSubscriber(ctx: vscode.ExtensionContext) {
   if (peer().isPeerSetup()) {
     return;
   }
 
-  const peerid = await createFromProtobuf(
-    uint8ArrayFromString(peer2, "base64")
-  );
   const inputAddress = await vscode.window.showInputBox({
     placeHolder: "Multiaddress",
     prompt: "Type in the host Multiaddress",
   });
 
-  peer()
-    .recover(peerid, 9000, [inputAddress ?? ''])
-    .then((peer) => peer.initSubscriber(ctx))
-    .catch((err) => {
-      toast(err);
-    });
+  await readSettingsFile(ctx, peer().settingsFile).then(
+    (peerSettings) => {
+      logger().info("Reconnecting old subscriber.");
+      peer()
+      .recover(peerSettings.peerId, peerSettings.port, [inputAddress ?? ''])
+      .then((peer) => peer.initSubscriber(ctx))
+      .catch((err) => {
+        toast(err);
+      });
+    },
+    () => {
+      logger().info("Starting new subscriber");
+      peer()
+      .new([inputAddress ?? ''])
+      .then((peer) => peer.initSubscriber(ctx))
+      .catch((err) => {
+        toast(err);
+      }).then(
+        () => {
+          peer().p2p().then(
+            (p2p) => {
+              const multiAddrs = p2p.getMultiaddrs();
+              if (multiAddrs.length === 0) {
+                logger().error("Peer node has no multiaddrs.");
+              } else {
+                const port = multiAddrs[0].nodeAddress().port;
+                const peerId = peer().peer!.peerId;
+                writeSettingsFile(ctx, peer().settingsFile, peerId, port); 
+              }
+          });
+        }
+      );
+    }
+  );
 
 }
 

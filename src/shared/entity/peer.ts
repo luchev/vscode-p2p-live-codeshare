@@ -49,11 +49,11 @@ export class Peer {
     return toHumanReadableName((this.peer?.peerId ?? "").toString());
   }
 
-  async new() {
+  async new(bootstrapAddresses?: string[]) {
     if (this.isInitialized) {
       throw new Error("Cannot initialize a peer, which is already initialized");
     }
-    this.peer = await createNode({});
+    this.peer = await createNode({bootstrapAddresses:bootstrapAddresses});
     this.isInitialized = true;
     this.isDockerable = (await vscode.window.showInformationMessage(
       "Do you have Docker installed & running?",
