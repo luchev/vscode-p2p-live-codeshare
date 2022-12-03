@@ -15,6 +15,7 @@ import {
 } from "../listeners/workspace";
 import { toHumanReadableName } from "../nameGenerator";
 import {Stream} from '@libp2p/interface-connection';
+import { p2pShareProvider } from '../../sessionData';
 
 
 export class Peer {
@@ -59,6 +60,7 @@ export class Peer {
       "Yes",
       "No"
     )) === 'Yes';
+    this.extendTreeViewByPeer();
     return this;
   }
 
@@ -76,6 +78,7 @@ export class Peer {
           "Yes",
           "No"
         )) === 'Yes';
+        this.extendTreeViewByPeer();
         return Promise.resolve(this);
       })
       .catch((err) => {
@@ -141,5 +144,21 @@ export class Peer {
         rmSync(settingsPath);
       }
     }
+  }
+
+  extendTreeViewByPeer() {
+    const multiaddrs = this.peer!.getMultiaddrs().filter(
+      (multiaddr) => {
+        if (multiaddr.toString().includes(this.peer!.peerId.toString())) {
+          return true;
+        } else {
+          return false;
+        }
+      }).map(
+        (multiaddr) => {
+          return multiaddr.toString();
+        }
+      );
+    p2pShareProvider.addItem(this.peerName(), multiaddrs.concat([this.isDockerable ? "Dockerable" : "Not dockerable"]));
   }
 }
