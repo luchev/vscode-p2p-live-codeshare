@@ -40,7 +40,7 @@ export async function setupSubscriber(ctx: vscode.ExtensionContext) {
 
       logger().info("Starting new subscriber");
       peer()
-        .new([inputAddress ?? ""])
+        .new([inputAddress ?? ""], shouldRequestWorkspaceSync)
         .then((peer) => peer.initSubscriber(ctx))
         .catch((err) => {
           toast(err);
